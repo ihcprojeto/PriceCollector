@@ -1,0 +1,63 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/usuario_model.dart';
+
+class AuthRepository {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<UserCredential> signUp(UsuarioModel usuario) async {
+    try {
+      // 1. Criar usuário no Firebase Auth
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: usuario.email,
+        password: usuario.senha,
+      );
+
+      // 2. Salvar dados adicionais no Firestore
+      if (userCredential.user != null) {
+        // Não salvamos a senha no Firestore por segurança
+        final userData = usuario.toJson();
+        userData.remove('senha');
+        
+        await _firestore
+            .collection('usuarios')
+            .doc(userCredential.user!.uid)
+            .set(userData);
+      }
+
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      print('Firebase Auth Error: ${e.code} - ${e.message}');
+      throw _handleAuthException(e);
+    } catch (e) {
+      print('Unexpected Error during signUp: $e');
+      throw 'Ocorreu um erro inesperado. Tente novamente.';
+    }
+  }
+
+  String _handleAuthException(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'email-already-in-use':
+        return 'Este email já está sendo utilizado.';
+      case 'invalid-email':
+        return 'O formato do email é inválido.';
+      case 'weak-password':
+        return 'A senha é muito fraca.';
+      case 'operation-not-allowed':
+        return 'O cadastro com email e senha não está habilitado no Firebase.';
+      case 'network-request-failed':
+        return 'Falha na conexão com a internet.';
+      case 'too-many-requests':
+        return 'Muitas solicitações. Tente novamente mais tarde.';
+      default:
+        return 'Erro na autenticação (${e.code}): ${e.message}';
+    }
+  }
+
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
+
+  User? get currentUser => _auth.currentUser;
+}

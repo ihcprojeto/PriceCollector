@@ -1,8 +1,15 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
+
+// Repositories
+import 'repositories/auth_repository.dart';
+
+// Providers
+import 'providers/cadastro_provider.dart';
 
 // Import de todas as páginas convertidas
 import 'pages/login.dart';
@@ -26,7 +33,17 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<AuthRepository>(create: (_) => AuthRepository()),
+        ChangeNotifierProvider<CadastroProvider>(
+          create: (context) => CadastroProvider(context.read<AuthRepository>()),
+        ),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/responsive_header.dart';
 import '../utils/responsive.dart';
+import '../providers/cadastro_provider.dart';
 
 class CadastroPage extends StatefulWidget {
   const CadastroPage({super.key});
@@ -38,9 +40,35 @@ class _CadastroPageState extends State<CadastroPage> {
     super.dispose();
   }
 
-  void _onSubmit() {
+  Future<void> _onSubmit() async {
     if (_formKey.currentState!.validate()) {
-      context.pushNamed('login');
+      final cadastroProvider = context.read<CadastroProvider>();
+
+      final success = await cadastroProvider.registrarUsuario(
+        matricula: _matriculaController.text,
+        nome: _nomeController.text,
+        email: _emailController.text,
+        senha: _senhaController.text,
+      );
+
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Conta criada com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          context.pushNamed('login');
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(cadastroProvider.errorMessage ?? 'Erro ao criar conta'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -227,49 +255,64 @@ class _CadastroPageState extends State<CadastroPage> {
   }
 
   Widget _buildBottomSection(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+    return Consumer<CadastroProvider>(
+      builder: (context, provider, child) {
+        return Column(
           children: [
-            const Text(
-              'Já possui uma conta? ',
-              style: TextStyle(color: Color(0xFF666666)),
-            ),
-            GestureDetector(
-              onTap: () => context.pushNamed('login'),
-              child: const Text(
-                'Login',
-                style: TextStyle(
-                  color: AppTheme.primary,
-                  fontWeight: FontWeight.w600,
-                  decoration: TextDecoration.underline,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Já possui uma conta? ',
+                  style: TextStyle(color: Color(0xFF666666)),
                 ),
+                GestureDetector(
+                  onTap: () => context.pushNamed('login'),
+                  child: const Text(
+                    'Login',
+                    style: TextStyle(
+                      color: AppTheme.primary,
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: provider.isLoading ? null : _onSubmit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: provider.isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        'Criar conta',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 24),
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: _onSubmit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(
-              'Criar conta',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
