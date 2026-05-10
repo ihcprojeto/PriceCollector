@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "826141634966",
+    "project_id": "scanner-app-ihc",
+    "storage_bucket": "scanner-app-ihc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:826141634966:android:cb83dac0c05e93635dadb7",
+        "android_client_info": {
+          "package_name": "com.example.price_collector"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAc36vZNcQ4WYYlNUiDPT62Ioi7dn-CdXc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

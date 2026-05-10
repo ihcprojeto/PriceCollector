@@ -1,5 +1,7 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'firebase_options.dart';
 import 'theme/app_theme.dart';
 
 // Import de todas as páginas convertidas
@@ -17,7 +19,13 @@ import 'pages/dispositivo.dart';
 import 'pages/perfil.dart';
 import 'pages/produtividade.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MyApp());
 }
 
