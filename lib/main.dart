@@ -14,6 +14,7 @@ import 'repositories/auth_repository.dart';
 // Providers
 import 'providers/cadastro_provider.dart';
 import 'providers/loja_provider.dart';
+import 'providers/login_provider.dart';
 
 // Import de todas as páginas convertidas
 import 'pages/login.dart';
@@ -48,6 +49,9 @@ void main() async {
         ),
         ChangeNotifierProvider<LojaProvider>(
           create: (_) => LojaProvider(),
+        ),
+        ChangeNotifierProvider<LoginProvider>(
+          create: (context) => LoginProvider(context.read<AuthRepository>()),
         ),
       ],
       child: const MyApp(),

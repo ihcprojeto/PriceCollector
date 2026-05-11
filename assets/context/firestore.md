@@ -7,8 +7,7 @@
   "email": "string",
   "funcao": "string",
   "matricula": "string",
-  "nome": "string",
-  "senha": "string"
+  "nome": "string"
 }
 ```
 
@@ -19,8 +18,7 @@
   "email": "fonseca.geosilva@gmail.com",
   "funcao": "coletador",
   "matricula": "0020482413095",
-  "nome": "Geovanna Fonseca",
-  "senha": "abcd"
+  "nome": "Geovanna Fonseca"
 }
 ```
 

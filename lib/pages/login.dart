@@ -1,6 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../models/dispositivo_model.dart';
+import '../providers/login_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/responsive_header.dart';
@@ -19,15 +22,15 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _colaboradorController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
-  String? _dispositivoSelecionado;
-
   bool _isPasswordVisible = false;
 
-  final List<String> _dispositivos = [
-    'IPhone 15 Pro Max',
-    'Galaxy S25 Ultra',
-    'IdeaPad Slim 3'
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<LoginProvider>().carregarDispositivos();
+    });
+  }
 
   @override
   void dispose() {
@@ -36,8 +39,30 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  void _handleLogin() async {
+    final provider = context.read<LoginProvider>();
+    final success = await provider.login(
+      _colaboradorController.text.trim(),
+      _senhaController.text.trim(),
+    );
+
+    if (success && mounted) {
+      context.goNamed('dashboard');
+    } else if (provider.errorMessage != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage!),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      provider.clearError();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final loginProvider = context.watch<LoginProvider>();
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -80,16 +105,18 @@ class _LoginPageState extends State<LoginPage> {
                               style: Theme.of(context).textTheme.labelLarge,
                             ),
                             const SizedBox(height: 6),
-                            DropdownButtonFormField<String>(
-                              value: _dispositivoSelecionado,
-                              hint: const Text('Selecione...'),
-                              items: _dispositivos.map((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
+                            DropdownButtonFormField<DispositivoModel>(
+                              value: loginProvider.dispositivoSelecionado,
+                              hint: loginProvider.isLoadingDevices 
+                                  ? const Text('Carregando dispositivos...')
+                                  : const Text('Selecione...'),
+                              items: loginProvider.dispositivos.map((DispositivoModel dev) {
+                                return DropdownMenuItem<DispositivoModel>(
+                                  value: dev,
+                                  child: Text(dev.displayName),
                                 );
                               }).toList(),
-                              onChanged: (val) => setState(() => _dispositivoSelecionado = val),
+                              onChanged: loginProvider.isLoading ? null : (val) => loginProvider.setDispositivo(val),
                               decoration: InputDecoration(
                                 filled: true,
                                 fillColor: AppTheme.inputBg,
@@ -102,11 +129,14 @@ class _LoginPageState extends State<LoginPage> {
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: const BorderSide(color: AppTheme.primary),
                                 ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Colors.red),
+                                ),
                               ),
-                              icon: const Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                color: AppTheme.primary,
-                              ),
+                              icon: loginProvider.isLoadingDevices 
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                                : const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.primary),
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: Colors.black,
                               ),
@@ -147,9 +177,7 @@ class _LoginPageState extends State<LoginPage> {
                           width: double.infinity,
                           height: 52,
                           child: ElevatedButton(
-                            onPressed: () {
-                              context.pushNamed('dashboard');
-                            },
+                            onPressed: loginProvider.isLoading ? null : _handleLogin,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primary,
                               foregroundColor: Colors.white,
@@ -158,10 +186,12 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               elevation: 0,
                             ),
-                            child: Text(
-                              'Login',
-                              style: Theme.of(context).textTheme.titleSmall,
-                            ),
+                            child: loginProvider.isLoading 
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : Text(
+                                  'Login',
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
                           ),
                         ),
                       ],

@@ -36,22 +36,63 @@ class AuthRepository {
     }
   }
 
+  Future<UserCredential> login(String identificador, String senha) async {
+    try {
+      String email = identificador;
+
+      // Identifica se é matrícula (não contém @)
+      if (!identificador.contains('@')) {
+        final query = await _firestore
+            .collection('usuarios')
+            .where('matricula', isEqualTo: identificador)
+            .limit(1)
+            .get();
+
+        if (query.docs.isEmpty) {
+          throw FirebaseAuthException(
+            code: 'user-not-found',
+            message: 'Matrícula não encontrada.',
+          );
+        }
+        email = query.docs.first.get('email');
+      }
+
+      return await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: senha,
+      );
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw 'Erro inesperado ao realizar login.';
+    }
+  }
+
+  Future<UsuarioModel?> getUsuarioData(String uid) async {
+    final doc = await _firestore.collection('usuarios').doc(uid).get();
+    if (doc.exists) {
+      return UsuarioModel.fromJson(doc.data()!, doc.id);
+    }
+    return null;
+  }
+
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
-      case 'email-already-in-use':
-        return 'Este email já está sendo utilizado.';
+      case 'user-not-found':
+        return 'Usuário não encontrado.';
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'E-mail/Matrícula ou senha incorretos.';
       case 'invalid-email':
         return 'O formato do email é inválido.';
-      case 'weak-password':
-        return 'A senha é muito fraca.';
-      case 'operation-not-allowed':
-        return 'O cadastro com email e senha não está habilitado no Firebase.';
+      case 'user-disabled':
+        return 'Este usuário foi desativado.';
       case 'network-request-failed':
         return 'Falha na conexão com a internet.';
       case 'too-many-requests':
         return 'Muitas solicitações. Tente novamente mais tarde.';
       default:
-        return 'Erro na autenticação (${e.code}): ${e.message}';
+        return 'Erro na autenticação: ${e.message ?? e.code}';
     }
   }
 
