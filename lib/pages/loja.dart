@@ -1,6 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../models/loja_model.dart';
+import '../providers/loja_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/responsive_body.dart';
@@ -17,38 +21,33 @@ class LojaPage extends StatefulWidget {
 
 class _LojaPageState extends State<LojaPage> {
   final TextEditingController _searchController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode();
 
-  final List<Map<String, String>> _lojas = [
-    {
-      'nome': 'Carrefour',
-      'endereco': 'R. Marambaia, 200 - Casa Verde, São Paulo',
-      'imagem': 'assets/images/carrefour_img.jpg',
-    },
-    {
-      'nome': 'Atacadão',
-      'endereco': 'Av. Inajar de Souza, 5180 - Limão, São Paulo',
-      'imagem': 'assets/images/atacadao-img.jpg',
-    },
-    {
-      'nome': 'Ninki',
-      'endereco': 'Alameda Barros, 192 - Santa Cecilia, São Paulo',
-      'imagem': 'assets/images/Ninki.jpeg',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<LojaProvider>().fetchLojas();
+    });
+    _searchController.addListener(_onSearchChanged);
+  }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
-    _searchFocusNode.dispose();
     super.dispose();
   }
 
-  Future<void> _confirmDelete(int index) async {
+  void _onSearchChanged() {
+    context.read<LojaProvider>().filterLojas(_searchController.text);
+  }
+
+  Future<void> _confirmDelete(LojaModel loja) async {
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Deseja deletar loja?'),
+        content: Text('Tem certeza que deseja remover a loja "${loja.nome}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -56,21 +55,27 @@ class _LojaPageState extends State<LojaPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Confirmar'),
           ),
         ],
       ),
     );
 
-    if (confirm == true) {
-      setState(() {
-        _lojas.removeAt(index);
-      });
+    if (confirm == true && mounted) {
+      await context.read<LojaProvider>().deleteLoja(loja.id!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Loja removida com sucesso!')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final lojaProvider = context.watch<LojaProvider>();
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -111,7 +116,6 @@ class _LojaPageState extends State<LojaPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 child: TextFormField(
                   controller: _searchController,
-                  focusNode: _searchFocusNode,
                   decoration: InputDecoration(
                     hintText: 'Buscar lojas...',
                     hintStyle: GoogleFonts.inter(
@@ -130,9 +134,28 @@ class _LojaPageState extends State<LojaPage> {
                   style: GoogleFonts.inter(fontSize: 14),
                 ),
               ),
-              Expanded(
-                child: _buildStoreList(context),
-              ),
+              if (lojaProvider.isLoading && lojaProvider.lojas.isEmpty)
+                const Expanded(child: Center(child: CircularProgressIndicator()))
+              else if (lojaProvider.lojas.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.storefront_outlined, size: 64, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Nenhuma loja encontrada',
+                          style: GoogleFonts.inter(color: Colors.grey, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: _buildStoreList(context, lojaProvider.lojas),
+                ),
             ],
           ),
         ),
@@ -140,13 +163,13 @@ class _LojaPageState extends State<LojaPage> {
     );
   }
 
-  Widget _buildStoreList(BuildContext context) {
+  Widget _buildStoreList(BuildContext context, List<LojaModel> lojas) {
     if (Responsive.isMobile(context)) {
       return ListView.builder(
         padding: const EdgeInsets.only(top: 4, bottom: 12),
-        itemCount: _lojas.length,
+        itemCount: lojas.length,
         itemBuilder: (context, index) {
-          return _buildStoreCard(context, index, _lojas[index]);
+          return _buildStoreCard(context, lojas[index]);
         },
       );
     } else {
@@ -158,18 +181,19 @@ class _LojaPageState extends State<LojaPage> {
           mainAxisSpacing: 16,
           childAspectRatio: 2.5,
         ),
-        itemCount: _lojas.length,
+        itemCount: lojas.length,
         itemBuilder: (context, index) {
-          return _buildStoreCard(context, index, _lojas[index]);
+          return _buildStoreCard(context, lojas[index]);
         },
       );
     }
   }
 
-  Widget _buildStoreCard(BuildContext context, int index, Map<String, String> loja) {
+  Widget _buildStoreCard(BuildContext context, LojaModel loja) {
     return InkWell(
-      onTap: () => context.pushNamed('listaProdutos'),
+      onTap: () => context.pushNamed('listaProdutos', extra: loja),
       child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: const [
@@ -187,11 +211,16 @@ class _LojaPageState extends State<LojaPage> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(6),
-                child: Image.asset(
-                  loja['imagem']!,
+                child: CachedNetworkImage(
+                  imageUrl: loja.imagemUrl,
                   width: 80,
                   height: 80,
                   fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey[200],
+                    child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  ),
+                  errorWidget: (context, url, error) => const Icon(Icons.store),
                 ),
               ),
               const SizedBox(width: 12),
@@ -201,9 +230,9 @@ class _LojaPageState extends State<LojaPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      loja['nome']!,
+                      loja.nome,
                       style: GoogleFonts.interTight(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
                       maxLines: 1,
@@ -211,7 +240,7 @@ class _LojaPageState extends State<LojaPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      loja['endereco']!,
+                      loja.endereco,
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: const Color(0xFF666666),
@@ -227,13 +256,13 @@ class _LojaPageState extends State<LojaPage> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.edit, color: Color(0xFF57636C), size: 20),
-                    onPressed: () => context.pushNamed('lojaAdd'),
+                    onPressed: () => context.pushNamed('lojaAdd', extra: loja),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete_forever, color: Color(0xFFF64736), size: 20),
-                    onPressed: () => _confirmDelete(index),
+                    onPressed: () => _confirmDelete(loja),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),

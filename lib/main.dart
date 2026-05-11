@@ -11,6 +11,9 @@ import 'package:cloudinary_flutter/cloudinary_context.dart';
 // Repositories
 import 'repositories/auth_repository.dart';
 
+// Models
+import 'models/loja_model.dart';
+
 // Providers
 import 'providers/cadastro_provider.dart';
 import 'providers/loja_provider.dart';
@@ -89,7 +92,7 @@ class MyApp extends StatelessWidget {
       GoRoute(
         name: 'lojaAdd',
         path: '/lojaAdd',
-        builder: (context, state) => const LojaAddPage(),
+        builder: (context, state) => LojaAddPage(loja: state.extra as LojaModel?),
       ),
       GoRoute(
         name: 'listaProdutos',
