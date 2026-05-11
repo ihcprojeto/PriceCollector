@@ -68,14 +68,22 @@ class LoginProvider with ChangeNotifier {
     try {
       final userCredential = await _authRepository.login(identificador, senha);
       if (userCredential.user != null) {
-        _usuarioLogado = await _authRepository.getUsuarioData(userCredential.user!.uid);
+        final uid = userCredential.user!.uid;
+        _usuarioLogado = await _authRepository.getUsuarioData(uid);
+        
         if (_usuarioLogado == null) {
           _errorMessage = 'Dados do usuário não encontrados no Firestore.';
           await _authRepository.signOut();
           return false;
         }
-        // Aqui você pode salvar o dispositivo selecionado em um SharedPreferences ou no estado global
-        // Para este exemplo, apenas retornamos sucesso
+
+        // Regra de Negócio: Salvar dispositivo utilizado
+        await _authRepository.registrarDispositivoUtilizado(
+          uid,
+          _dispositivoSelecionado!.modelo,
+          _dispositivoSelecionado!.serial,
+        );
+
         return true;
       }
       return false;

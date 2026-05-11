@@ -44,7 +44,7 @@ class _ListaProdutosPageState extends State<ListaProdutosPage> {
             onPressed: () => context.pop(),
           ),
           title: Text(
-            'Lista Produtos',
+            'Lista de Produtos',
             style: GoogleFonts.interTight(
               color: Colors.white,
               fontSize: Responsive.isDesktop(context) ? 30 : 25,
@@ -118,7 +118,7 @@ class _ListaProdutosPageState extends State<ListaProdutosPage> {
                                   hint: const Text('Filtrar por', style: TextStyle(fontSize: 14)),
                                   icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.black),
                                   isExpanded: true,
-                                  items: ['Geral', 'Pendentes', 'Coletados']
+                                  items: ['Geral', 'Pendentes', 'Coletados', 'Cancelados']
                                       .map((label) => DropdownMenuItem(
                                             value: label,
                                             child: Text(label, style: const TextStyle(fontSize: 14)),
@@ -345,7 +345,7 @@ class _ListaProdutosPageState extends State<ListaProdutosPage> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete_forever, color: Color(0xFFF64736), size: 20),
+                        icon: const Icon(Icons.cancel, color: Color(0xFFF64736), size: 20),
                         onPressed: () => _confirmDeleteProduct(context),
                         constraints: const BoxConstraints(),
                         padding: EdgeInsets.zero,
@@ -365,7 +365,7 @@ class _ListaProdutosPageState extends State<ListaProdutosPage> {
     await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Deseja deletar produto?'),
+        title: const Text('Deseja cancelar essa demanda?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),

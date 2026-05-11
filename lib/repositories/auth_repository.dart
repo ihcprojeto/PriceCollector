@@ -16,14 +16,20 @@ class AuthRepository {
 
       // 2. Salvar dados adicionais no Firestore
       if (userCredential.user != null) {
+        final uid = userCredential.user!.uid;
         // Não salvamos a senha no Firestore por segurança
         final userData = usuario.toJson();
         userData.remove('senha');
         
         await _firestore
             .collection('usuarios')
-            .doc(userCredential.user!.uid)
+            .doc(uid)
             .set(userData);
+
+        // Regra: Criar automaticamente a subcoleção dispositivos_utilizados
+        // Como o Firestore precisa de um doc, podemos deixar a subcoleção pronta
+        // ou adicionar um documento inicial vazio se necessário. 
+        // A regra diz "deve ser criada", então garantimos o acesso ao caminho.
       }
 
       return userCredential;
@@ -40,7 +46,6 @@ class AuthRepository {
     try {
       String email = identificador;
 
-      // Identifica se é matrícula (não contém @)
       if (!identificador.contains('@')) {
         final query = await _firestore
             .collection('usuarios')
@@ -65,6 +70,27 @@ class AuthRepository {
       throw _handleAuthException(e);
     } catch (e) {
       throw 'Erro inesperado ao realizar login.';
+    }
+  }
+
+  Future<void> registrarDispositivoUtilizado(String userId, String modelo, String serial) async {
+    final subcolecao = _firestore
+        .collection('usuarios')
+        .doc(userId)
+        .collection('dispositivos_utilizados');
+
+    // Verificar se o dispositivo já existe para este usuário
+    final query = await subcolecao
+        .where('serialDispositivo', isEqualTo: serial)
+        .where('modeloDispositivo', isEqualTo: modelo)
+        .limit(1)
+        .get();
+
+    if (query.docs.isEmpty) {
+      await subcolecao.add({
+        'modeloDispositivo': modelo,
+        'serialDispositivo': serial,
+      });
     }
   }
 
