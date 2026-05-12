@@ -95,6 +95,13 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
             ),
           ),
         ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            // Lógica de download
+          },
+          backgroundColor: AppTheme.primary,
+          child: const Icon(Icons.download_sharp, color: Colors.white, size: 24),
+        ),
       ),
     );
   }

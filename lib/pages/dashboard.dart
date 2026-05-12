@@ -135,7 +135,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Olá, ${usuario?.nome ?? 'Usuário'}!',
+                    'Olá, ${usuario?.nome ?? 'Usuário(a)'}!',
                     style: GoogleFonts.interTight(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -143,7 +143,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                   Text(
-                    usuario?.funcao?.toUpperCase() ?? 'COLETADOR',
+                    '${usuario?.funcao?.toUpperCase() ?? 'COLETADOR'}(A)',
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -197,11 +197,11 @@ class _DashboardPageState extends State<DashboardPage> {
         'route': 'lojas',
       },
       {
-        'title': 'Lojas',
-        'subtitle': 'Gerenciar estabelecimentos',
-        'icon': Icons.storefront_rounded,
+        'title': 'Produtos Coletados',
+        'subtitle': 'Ver itens já coletados',
+        'icon': Icons.inventory_2_rounded,
         'color': const Color(0xFF39D2C0),
-        'route': 'lojas',
+        'route': 'produtos_coletados',
       },
       {
         'title': 'Produtividade',

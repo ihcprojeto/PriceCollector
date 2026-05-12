@@ -144,19 +144,7 @@ class _ProdutosColetadosPageState extends State<ProdutosColetadosPage> {
                 ),
                 const Divider(height: 1, thickness: 1, color: AppTheme.border),
                 Expanded(
-                  child: Stack(
-                    children: [
-                      _buildProductList(context),
-                      Align(
-                        alignment: const AlignmentDirectional(0.95, 0.95),
-                        child: FloatingActionButton(
-                          onPressed: () => context.pushNamed('dashboard'),
-                          backgroundColor: AppTheme.primary,
-                          child: const Icon(Icons.download_sharp, color: Colors.white, size: 24),
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: _buildProductList(context),
                 ),
               ],
             ),
