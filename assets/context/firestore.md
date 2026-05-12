@@ -101,7 +101,7 @@
   "preco": 6.99,
   "produtoBarcode": "7891025115656",
   "produtoNome": "YoPro Chocolate",
-  "usuarioId": "auth_uid_123",
+  "usuarioMatricula": "1234567",
   "usuarioNome": "João Souza"
 }
 ```
