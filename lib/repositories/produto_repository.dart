@@ -37,4 +37,19 @@ class ProdutoRepository {
 
     await batch.commit();
   }
+
+  Future<DemandaModel?> getDemandaByBarcode(String lojaId, String barcode) async {
+    final query = await _firestore
+        .collection('lojas')
+        .doc(lojaId)
+        .collection('demandas')
+        .where('barcode', isEqualTo: barcode)
+        .limit(1)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      return DemandaModel.fromFirestore(query.docs.first.data(), query.docs.first.id);
+    }
+    return null;
+  }
 }

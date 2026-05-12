@@ -9,6 +9,7 @@ class CustomTextField extends StatelessWidget {
   final VoidCallback? toggleVisibility;
   final TextEditingController controller;
   final String? Function(String?)? validator;
+  final TextInputType keyboardType;
 
   const CustomTextField({
     super.key,
@@ -19,6 +20,7 @@ class CustomTextField extends StatelessWidget {
     this.obscure = false,
     this.toggleVisibility,
     this.validator,
+    this.keyboardType = TextInputType.text,
   });
 
   @override
@@ -32,6 +34,7 @@ class CustomTextField extends StatelessWidget {
           controller: controller,
           obscureText: obscure,
           validator: validator,
+          keyboardType: keyboardType,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,

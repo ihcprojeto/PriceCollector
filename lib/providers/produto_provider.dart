@@ -73,6 +73,23 @@ class ProdutoProvider with ChangeNotifier {
     }
   }
 
+  Future<DemandaModel?> validarBarcode(String lojaId, String barcode) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final demanda = await _repository.getDemandaByBarcode(lojaId, barcode);
+      return demanda;
+    } catch (e) {
+      _errorMessage = 'Erro ao validar código: $e';
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> importarCSV(String lojaId) async {
     _isLoading = true;
     _errorMessage = null;

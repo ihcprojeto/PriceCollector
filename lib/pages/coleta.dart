@@ -4,9 +4,18 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/responsive_body.dart';
+import '../models/loja_model.dart';
+import '../models/demanda_model.dart';
 
 class ColetaPage extends StatefulWidget {
-  const ColetaPage({super.key});
+  final LojaModel loja;
+  final DemandaModel demanda;
+
+  const ColetaPage({
+    super.key,
+    required this.loja,
+    required this.demanda,
+  });
 
   static const String routeName = 'coleta';
   static const String routePath = '/coleta';
@@ -68,7 +77,7 @@ class _ColetaPageState extends State<ColetaPage> {
 
       if (!mounted) return;
       if (nextStep == true) {
-        context.pushNamed('scanner');
+        context.pushNamed('scanner', extra: widget.loja);
       } else if (nextStep == false) {
         context.pushNamed('produtos_coletados');
       }
@@ -200,12 +209,22 @@ class _ColetaPageState extends State<ColetaPage> {
                 width: 80,
                 height: 80,
                 color: const Color(0xFFF1F4F8),
-                child: Image.asset(
-                  'assets/images/yopro.webp',
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                ),
+                child: widget.demanda.produtoImagemUrl.startsWith('http')
+                    ? Image.network(
+                        widget.demanda.produtoImagemUrl,
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_not_supported),
+                      )
+                    : Image.asset(
+                        widget.demanda.produtoImagemUrl.isNotEmpty
+                            ? widget.demanda.produtoImagemUrl
+                            : 'assets/images/yopro.webp', // fallback
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                      ),
               ),
             ),
             const SizedBox(width: 14),
@@ -214,7 +233,7 @@ class _ColetaPageState extends State<ColetaPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'YoPro',
+                    widget.demanda.produtoNome,
                     maxLines: 2,
                     style: GoogleFonts.interTight(
                       fontSize: 18,
@@ -235,7 +254,7 @@ class _ColetaPageState extends State<ColetaPage> {
                         const Icon(Icons.workspace_premium_outlined, color: AppTheme.primary, size: 12),
                         const SizedBox(width: 4),
                         Text(
-                          'Danone',
+                          widget.demanda.produtoMarca,
                           style: GoogleFonts.inter(
                             color: AppTheme.primary,
                             fontSize: 11,
@@ -250,7 +269,7 @@ class _ColetaPageState extends State<ColetaPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Bebida proteica - 500g',
+                        widget.demanda.produtoDescricao,
                         style: GoogleFonts.interTight(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
@@ -258,7 +277,7 @@ class _ColetaPageState extends State<ColetaPage> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () => context.pushNamed('scanner'),
+                        onPressed: () => context.pushNamed('scanner', extra: widget.loja),
                         icon: const Icon(Icons.edit_rounded, color: AppTheme.primary, size: 18),
                         constraints: const BoxConstraints(),
                         padding: EdgeInsets.zero,

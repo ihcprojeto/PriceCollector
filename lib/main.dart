@@ -13,6 +13,7 @@ import 'repositories/auth_repository.dart';
 
 // Models
 import 'models/loja_model.dart';
+import 'models/demanda_model.dart';
 
 // Providers
 import 'providers/cadastro_provider.dart';
@@ -110,12 +111,18 @@ class MyApp extends StatelessWidget {
       GoRoute(
         name: 'scanner',
         path: '/scanner',
-        builder: (context, state) => const ScannerPage(),
+        builder: (context, state) => ScannerPage(loja: state.extra as LojaModel),
       ),
       GoRoute(
         name: 'coleta',
         path: '/coleta',
-        builder: (context, state) => const ColetaPage(),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return ColetaPage(
+            loja: extra['loja'] as LojaModel,
+            demanda: extra['demanda'] as DemandaModel,
+          );
+        },
       ),
       GoRoute(
         name: 'produtos_coletados',

@@ -1,13 +1,21 @@
-import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+import '../models/loja_model.dart';
+import '../models/demanda_model.dart';
+import '../providers/dashboard_provider.dart';
+import '../providers/produto_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
+import '../widgets/custom_text_field.dart';
 import '../widgets/responsive_body.dart';
 
 class ScannerPage extends StatefulWidget {
-  const ScannerPage({super.key});
+  final LojaModel loja;
+  const ScannerPage({super.key, required this.loja});
 
   static const String routeName = 'scanner';
   static const String routePath = '/scanner';
@@ -18,45 +26,145 @@ class ScannerPage extends StatefulWidget {
 
 class _ScannerPageState extends State<ScannerPage> {
   final TextEditingController _barcodeController = TextEditingController();
-  final FocusNode _barcodeFocusNode = FocusNode();
+  final MobileScannerController _scannerController = MobileScannerController();
+  bool _isScanning = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPermission();
+  }
 
   @override
   void dispose() {
     _barcodeController.dispose();
-    _barcodeFocusNode.dispose();
+    _scannerController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkPermission() async {
+    final status = await Permission.camera.request();
+    if (status.isDenied) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('A permissão da câmera é necessária para escanear.')),
+        );
+      }
+    }
+  }
+
+  void _onDetect(BarcodeCapture capture) {
+    if (!_isScanning) return;
+    final List<Barcode> barcodes = capture.barcodes;
+    for (final barcode in barcodes) {
+      if (barcode.rawValue != null) {
+        _validateBarcode(barcode.rawValue!);
+        break;
+      }
+    }
+  }
+
+  Future<void> _validateBarcode(String barcode) async {
+    setState(() => _isScanning = false);
+    _scannerController.stop();
+
+    final provider = context.read<ProdutoProvider>();
+    final user = context.read<DashboardProvider>().usuario;
+    final isAdmin = user?.funcao == 'administrador';
+
+    final demanda = await provider.validarBarcode(widget.loja.id!, barcode);
+
+    if (!mounted) return;
+
+    if (demanda == null) {
+      _showNotFoundDialog(isAdmin);
+    } else if (demanda.status == 'cancelado') {
+      _showWarningDialog('Este produto foi cancelado na demanda atual.');
+    } else if (demanda.status == 'coletado') {
+      _showWarningDialog('Este produto já foi coletado na demanda atual.');
+    } else {
+      // Produto Válido e Pendente
+      context.pushNamed('coleta', extra: {
+        'loja': widget.loja,
+        'demanda': demanda,
+      });
+    }
+  }
+
+  void _showNotFoundDialog(bool isAdmin) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Produto Não Encontrado'),
+        content: Text(isAdmin
+            ? 'Este item não está nas demandas atuais. Para adicioná-lo, importe um novo produto.'
+            : 'Este item não está nas demandas atuais. Para adicioná-lo, entre em contato com um administrador.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _resumeScanner();
+            },
+            child: const Text('Cancelar'),
+          ),
+          if (isAdmin)
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.pushNamed('listaProdutos', extra: widget.loja);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+              child: const Text('Importar Produto', style: TextStyle(color: Colors.white)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showWarningDialog(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Aviso'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _resumeScanner();
+            },
+            child: const Text('Ok'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _resumeScanner() {
+    setState(() => _isScanning = true);
+    _scannerController.start();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<ProdutoProvider>().isLoading;
+
     return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
           backgroundColor: AppTheme.primary,
-          automaticallyImplyLeading: false,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 24),
+            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
             onPressed: () => context.pop(),
           ),
           title: Text(
-            'Scanner',
-            style: GoogleFonts.interTight(
-              color: Colors.white,
-              fontSize: Responsive.isDesktop(context) ? 30 : 26,
-              fontWeight: FontWeight.w600,
-            ),
+            'Scanner de Preços',
+            style: GoogleFonts.interTight(color: Colors.white, fontWeight: FontWeight.w600),
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.home_sharp, color: Colors.white, size: 24),
-              onPressed: () => context.pushNamed('dashboard'),
-            ),
-          ],
           centerTitle: true,
           elevation: 0,
         ),
@@ -64,72 +172,73 @@ class _ScannerPageState extends State<ScannerPage> {
           child: ResponsiveBody(
             maxWidth: 600,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Spacer(),
-                BarcodeWidget(
-                  data: '7891025115656',
-                  barcode: Barcode.code128(),
-                  width: Responsive.isDesktop(context) ? 300 : 200,
-                  height: Responsive.isDesktop(context) ? 300 : 200,
-                  color: Colors.black,
-                  backgroundColor: Colors.transparent,
-                  drawText: false,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Aponte a câmera para o código de barras',
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF1A1A1A),
-                    fontSize: 14,
-                  ),
-                ),
-                const Spacer(),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    onPressed: () => context.pushNamed('coleta'),
-                    icon: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
-                    label: Text(
-                      'Aperte para Scannear',
-                      style: GoogleFonts.interTight(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                Expanded(
+                  flex: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          MobileScanner(
+                            controller: _scannerController,
+                            onDetect: _onDetect,
+                          ),
+                          // Overlay visual para área de leitura
+                          Container(
+                            width: 250,
+                            height: 250,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppTheme.primary, width: 4),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          if (isLoading)
+                            Container(
+                              color: Colors.black54,
+                              child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+                            ),
+                        ],
                       ),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 0,
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CustomTextField(
+                          label: 'Código de Barras',
+                          hint: 'Digitar manualmente...',
+                          icon: Icons.keyboard_rounded,
+                          controller: _barcodeController,
+                          keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            onPressed: isLoading ? null : () => _validateBarcode(_barcodeController.text.trim()),
+                            icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                            label: Text(
+                              'Ler e Prosseguir',
+                              style: GoogleFonts.interTight(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-                TextFormField(
-                  controller: _barcodeController,
-                  focusNode: _barcodeFocusNode,
-                  decoration: InputDecoration(
-                    hintText: 'Digitar o código de barras',
-                    hintStyle: GoogleFonts.inter(
-                      color: const Color(0xFF666666),
-                      fontSize: 14,
-                    ),
-                    prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF666666), size: 20),
-                    filled: true,
-                    fillColor: const Color(0xFFF1F4F8),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  style: GoogleFonts.inter(fontSize: 14),
-                ),
-                const Spacer(),
               ],
             ),
           ),
