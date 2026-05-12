@@ -18,6 +18,8 @@ import 'models/loja_model.dart';
 import 'providers/cadastro_provider.dart';
 import 'providers/loja_provider.dart';
 import 'providers/login_provider.dart';
+import 'providers/dashboard_provider.dart';
+import 'providers/produto_provider.dart';
 
 // Import de todas as páginas convertidas
 import 'pages/login.dart';
@@ -55,6 +57,12 @@ void main() async {
         ),
         ChangeNotifierProvider<LoginProvider>(
           create: (context) => LoginProvider(context.read<AuthRepository>()),
+        ),
+        ChangeNotifierProvider<DashboardProvider>(
+          create: (context) => DashboardProvider(context.read<AuthRepository>()),
+        ),
+        ChangeNotifierProvider<ProdutoProvider>(
+          create: (_) => ProdutoProvider(),
         ),
       ],
       child: const MyApp(),
@@ -97,7 +105,7 @@ class MyApp extends StatelessWidget {
       GoRoute(
         name: 'listaProdutos',
         path: '/listaProdutos',
-        builder: (context, state) => const ListaProdutosPage(),
+        builder: (context, state) => ListaProdutosPage(loja: state.extra as LojaModel),
       ),
       GoRoute(
         name: 'scanner',

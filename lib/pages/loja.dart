@@ -91,7 +91,7 @@ class _LojaPageState extends State<LojaPage> {
             onPressed: () => context.pop(),
           ),
           title: Text(
-            'Selecione a Loja',
+            'Lojas',
             style: GoogleFonts.interTight(
               color: Colors.white,
               fontSize: Responsive.isDesktop(context) ? 30 : 26,
