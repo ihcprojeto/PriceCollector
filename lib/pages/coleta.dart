@@ -109,7 +109,7 @@ class _ColetaPageState extends State<ColetaPage> {
       if (!mounted) return;
 
       if (success) {
-        final bool? nextStep = await showDialog<bool>(
+        final String? nextStep = await showDialog<String>(
           context: context,
           barrierDismissible: false,
           builder: (context) => AlertDialog(
@@ -117,11 +117,15 @@ class _ColetaPageState extends State<ColetaPage> {
             content: const Text('O que deseja fazer agora?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context, false),
+                onPressed: () => Navigator.pop(context, 'demanda'),
+                child: const Text('Ver demanda'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'produtos'),
                 child: const Text('Ver produtos'),
               ),
               TextButton(
-                onPressed: () => Navigator.pop(context, true),
+                onPressed: () => Navigator.pop(context, 'nova'),
                 child: const Text('Nova coleta'),
               ),
             ],
@@ -129,10 +133,12 @@ class _ColetaPageState extends State<ColetaPage> {
         );
 
         if (!mounted) return;
-        if (nextStep == true) {
+        if (nextStep == 'nova') {
           context.pushNamed('scanner', extra: widget.loja);
-        } else {
+        } else if (nextStep == 'demanda') {
           context.pushNamed('listaProdutos', extra: widget.loja);
+        } else if (nextStep == 'produtos') {
+          context.pushNamed('produtos_coletados');
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -76,6 +76,15 @@ class ProdutoProvider with ChangeNotifier {
     }
   }
 
+  Future<void> deletarDemanda(String lojaId, String demandaId) async {
+    try {
+      await _repository.deletarDemanda(lojaId, demandaId);
+    } catch (e) {
+      _errorMessage = 'Erro ao deletar demanda: $e';
+      notifyListeners();
+    }
+  }
+
   Future<DemandaModel?> validarBarcode(String lojaId, String barcode) async {
     _isLoading = true;
     _errorMessage = null;

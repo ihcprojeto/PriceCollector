@@ -80,6 +80,28 @@ class _ListaProdutosPageState extends State<ListaProdutosPage> {
     }
   }
 
+  Future<void> _confirmDelete(DemandaModel demanda) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Excluir Demanda?'),
+        content: Text('Deseja realmente excluir permanentemente a demanda do produto "${demanda.produtoNome}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Não')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Sim, excluir'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      await context.read<ProdutoProvider>().deletarDemanda(widget.loja.id!, demanda.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final produtoProvider = context.watch<ProdutoProvider>();
@@ -330,6 +352,13 @@ class _ListaProdutosPageState extends State<ListaProdutosPage> {
                         IconButton(
                           icon: const Icon(Icons.cancel_outlined, color: Colors.red, size: 20),
                           onPressed: () => _confirmCancel(demanda),
+                          constraints: const BoxConstraints(),
+                          padding: EdgeInsets.zero,
+                        ),
+                      if (demanda.status == 'cancelado')
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                          onPressed: () => _confirmDelete(demanda),
                           constraints: const BoxConstraints(),
                           padding: EdgeInsets.zero,
                         ),

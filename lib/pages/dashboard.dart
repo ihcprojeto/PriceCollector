@@ -59,7 +59,7 @@ class _DashboardPageState extends State<DashboardPage> {
         backgroundColor: AppTheme.primary,
         centerTitle: true,
         title: Text(
-          'Price Collector',
+          'PriceCollector',
           style: GoogleFonts.interTight(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: [

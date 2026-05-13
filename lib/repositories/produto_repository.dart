@@ -26,6 +26,15 @@ class ProdutoRepository {
         .update({'status': novoStatus});
   }
 
+  Future<void> deletarDemanda(String lojaId, String demandaId) async {
+    await _firestore
+        .collection('lojas')
+        .doc(lojaId)
+        .collection('demandas')
+        .doc(demandaId)
+        .delete();
+  }
+
   Future<void> importarDemandas(String lojaId, List<DemandaModel> novasDemandas) async {
     final batch = _firestore.batch();
     final demandasCollection = _firestore.collection('lojas').doc(lojaId).collection('demandas');
