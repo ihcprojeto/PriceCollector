@@ -28,11 +28,23 @@ class ProdutoRepository {
 
   Future<void> importarDemandas(String lojaId, List<DemandaModel> novasDemandas) async {
     final batch = _firestore.batch();
-    final collection = _firestore.collection('lojas').doc(lojaId).collection('demandas');
+    final demandasCollection = _firestore.collection('lojas').doc(lojaId).collection('demandas');
+    final produtosCollection = _firestore.collection('produtos');
 
     for (var demanda in novasDemandas) {
-      final docRef = collection.doc(); // Generate auto ID
-      batch.set(docRef, demanda.toMap());
+      // Salva na subcoleção de demandas da loja
+      final demandaDocRef = demandasCollection.doc();
+      batch.set(demandaDocRef, demanda.toMap());
+
+      // Salva na coleção global de produtos (usando barcode como ID para evitar duplicatas)
+      final produtoDocRef = produtosCollection.doc(demanda.barcode);
+      batch.set(produtoDocRef, {
+        'barcode': demanda.barcode,
+        'descricao': demanda.produtoDescricao,
+        'imagemUrl': demanda.produtoImagemUrl,
+        'marca': demanda.produtoMarca,
+        'nome': demanda.produtoNome,
+      }, SetOptions(merge: true));
     }
 
     await batch.commit();
