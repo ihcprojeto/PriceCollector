@@ -76,6 +76,15 @@ class ProdutoProvider with ChangeNotifier {
     }
   }
 
+  Future<void> reativarDemanda(String lojaId, String demandaId) async {
+    try {
+      await _repository.atualizarStatusDemanda(lojaId, demandaId, 'pendente');
+    } catch (e) {
+      _errorMessage = 'Erro ao reativar demanda: $e';
+      notifyListeners();
+    }
+  }
+
   Future<void> deletarDemanda(String lojaId, String demandaId) async {
     try {
       await _repository.deletarDemanda(lojaId, demandaId);
@@ -151,25 +160,40 @@ class ProdutoProvider with ChangeNotifier {
         
         if (rows.isEmpty) throw 'O arquivo CSV está vazio';
 
-        // Assuming structure: barcode, nome, marca, descricao, imagemUrl
-        List<DemandaModel> novasDemandas = [];
+        // Mapeamento local para evitar duplicatas no próprio CSV
+        Map<String, DemandaModel> uniqueDemandas = {};
+        int csvDuplicates = 0;
+
         for (var i = 1; i < rows.length; i++) {
           final row = rows[i];
           if (row.length < 5) continue;
 
-          novasDemandas.add(DemandaModel(
+          final barcode = row[0].toString().trim();
+          if (barcode.isEmpty) continue;
+
+          if (uniqueDemandas.containsKey(barcode)) {
+            csvDuplicates++;
+            continue;
+          }
+
+          uniqueDemandas[barcode] = DemandaModel(
             id: '',
-            barcode: row[0].toString(),
-            produtoNome: row[1].toString(),
-            produtoMarca: row[2].toString(),
-            produtoDescricao: row[3].toString(),
-            produtoImagemUrl: row[4].toString(),
+            barcode: barcode,
+            produtoNome: row[1].toString().trim(),
+            produtoMarca: row[2].toString().trim(),
+            produtoDescricao: row[3].toString().trim(),
+            produtoImagemUrl: row[4].toString().trim(),
             status: 'pendente',
-          ));
+          );
         }
 
-        if (novasDemandas.isNotEmpty) {
-          await _repository.importarDemandas(lojaId, novasDemandas);
+        if (uniqueDemandas.isNotEmpty) {
+          int firestoreIgnored = await _repository.importarDemandas(lojaId, uniqueDemandas.values.toList());
+          int totalIgnored = csvDuplicates + firestoreIgnored;
+
+          if (totalIgnored > 0) {
+            _errorMessage = '$totalIgnored produtos ignorados por duplicidade.';
+          }
         }
       }
     } catch (e) {

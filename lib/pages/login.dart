@@ -106,14 +106,18 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: 6),
                             DropdownButtonFormField<DispositivoModel>(
+                              isExpanded: true,
                               value: loginProvider.dispositivoSelecionado,
                               hint: loginProvider.isLoadingDevices 
                                   ? const Text('Carregando dispositivos...')
-                                  : const Text('Selecione...'),
+                                  : const Text('Selecione...', overflow: TextOverflow.ellipsis),
                               items: loginProvider.dispositivos.map((DispositivoModel dev) {
                                 return DropdownMenuItem<DispositivoModel>(
                                   value: dev,
-                                  child: Text(dev.displayName),
+                                  child: Text(
+                                    dev.displayName,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 );
                               }).toList(),
                               onChanged: loginProvider.isLoading ? null : (val) => loginProvider.setDispositivo(val),

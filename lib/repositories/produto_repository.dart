@@ -35,28 +35,58 @@ class ProdutoRepository {
         .delete();
   }
 
-  Future<void> importarDemandas(String lojaId, List<DemandaModel> novasDemandas) async {
-    final batch = _firestore.batch();
+  Future<int> importarDemandas(String lojaId, List<DemandaModel> novasDemandas) async {
+    // 1. Busca barcodes existentes na loja para evitar duplicidade
+    final snapshot = await _firestore
+        .collection('lojas')
+        .doc(lojaId)
+        .collection('demandas')
+        .get();
+    
+    final existingBarcodes = snapshot.docs.map((doc) => doc.data()['barcode'] as String).toSet();
+    
     final demandasCollection = _firestore.collection('lojas').doc(lojaId).collection('demandas');
     final produtosCollection = _firestore.collection('produtos');
 
-    for (var demanda in novasDemandas) {
-      // Salva na subcoleção de demandas da loja
-      final demandaDocRef = demandasCollection.doc();
-      batch.set(demandaDocRef, demanda.toMap());
+    int ignoredCount = 0;
+    List<DemandaModel> aImportar = [];
 
-      // Salva na coleção global de produtos (usando barcode como ID para evitar duplicatas)
-      final produtoDocRef = produtosCollection.doc(demanda.barcode);
-      batch.set(produtoDocRef, {
-        'barcode': demanda.barcode,
-        'descricao': demanda.produtoDescricao,
-        'imagemUrl': demanda.produtoImagemUrl,
-        'marca': demanda.produtoMarca,
-        'nome': demanda.produtoNome,
-      }, SetOptions(merge: true));
+    for (var demanda in novasDemandas) {
+      if (existingBarcodes.contains(demanda.barcode)) {
+        ignoredCount++;
+        continue;
+      }
+      aImportar.add(demanda);
+      existingBarcodes.add(demanda.barcode); // Evita duplicados na própria lista de importação
     }
 
-    await batch.commit();
+    if (aImportar.isEmpty) return ignoredCount;
+
+    // 2. Processa em lotes (limite de 500 do Firestore)
+    for (var i = 0; i < aImportar.length; i += 500) {
+      final batch = _firestore.batch();
+      final end = (i + 500 < aImportar.length) ? i + 500 : aImportar.length;
+      final chunk = aImportar.sublist(i, end);
+
+      for (var demanda in chunk) {
+        // Usa barcode como ID para garantir unicidade estrutural na subcoleção de demandas
+        final demandaDocRef = demandasCollection.doc(demanda.barcode);
+        batch.set(demandaDocRef, demanda.toMap());
+
+        // Atualiza/Cria na coleção global de produtos
+        final produtoDocRef = produtosCollection.doc(demanda.barcode);
+        batch.set(produtoDocRef, {
+          'barcode': demanda.barcode,
+          'descricao': demanda.produtoDescricao,
+          'imagemUrl': demanda.produtoImagemUrl,
+          'marca': demanda.produtoMarca,
+          'nome': demanda.produtoNome,
+        }, SetOptions(merge: true));
+      }
+      await batch.commit();
+    }
+    
+    return ignoredCount;
   }
 
   Future<DemandaModel?> getDemandaByBarcode(String lojaId, String barcode) async {

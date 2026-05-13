@@ -257,12 +257,18 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Icon(action['icon'], color: action['color'], size: 32),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  action['title'],
-                  style: GoogleFonts.interTight(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF14181B),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    action['title'],
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.interTight(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF14181B),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -271,6 +277,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Text(
                     action['subtitle'],
                     textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       color: const Color(0xFF57636C),

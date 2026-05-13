@@ -356,11 +356,23 @@ class _ListaProdutosPageState extends State<ListaProdutosPage> {
                           padding: EdgeInsets.zero,
                         ),
                       if (demanda.status == 'cancelado')
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
-                          onPressed: () => _confirmDelete(demanda),
-                          constraints: const BoxConstraints(),
-                          padding: EdgeInsets.zero,
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.restore_rounded, color: Colors.green, size: 20),
+                              onPressed: () => context.read<ProdutoProvider>().reativarDemanda(widget.loja.id!, demanda.id),
+                              tooltip: 'Reativar Demanda',
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+                              onPressed: () => _confirmDelete(demanda),
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ],
                         ),
                     ],
                   ),
