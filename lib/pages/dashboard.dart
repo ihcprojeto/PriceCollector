@@ -197,8 +197,8 @@ class _DashboardPageState extends State<DashboardPage> {
         'route': 'lojas',
       },
       {
-        'title': 'Produtos Coletados',
-        'subtitle': 'Ver itens já coletados',
+        'title': 'Coletados',
+        'subtitle': 'Ver produtos já coletados',
         'icon': Icons.inventory_2_rounded,
         'color': const Color(0xFF39D2C0),
         'route': 'produtos_coletados',

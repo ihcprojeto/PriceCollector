@@ -36,6 +36,7 @@ import 'pages/operacao.dart';
 import 'pages/dispositivo.dart';
 import 'pages/perfil.dart';
 import 'pages/produtividade.dart';
+import 'pages/splash.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -76,8 +77,13 @@ class MyApp extends StatelessWidget {
 
   // Configuração do GoRouter
   static final _router = GoRouter(
-    initialLocation: '/login', // Define o login como tela inicial
+    initialLocation: '/', // Começa na Splash Screen
     routes: [
+      GoRoute(
+        name: 'splash',
+        path: '/',
+        builder: (context, state) => const SplashPage(),
+      ),
       GoRoute(
         name: 'login',
         path: '/login',
