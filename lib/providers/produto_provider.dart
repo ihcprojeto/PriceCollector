@@ -3,11 +3,14 @@ import 'dart:io';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../models/coleta_model.dart';
 import '../models/demanda_model.dart';
 import '../repositories/produto_repository.dart';
+import '../repositories/coleta_repository.dart';
 
 class ProdutoProvider with ChangeNotifier {
   final ProdutoRepository _repository = ProdutoRepository();
+  final ColetaRepository _coletaRepository = ColetaRepository();
 
   List<DemandaModel> _demandas = [];
   List<DemandaModel> _filteredDemandas = [];
@@ -84,6 +87,26 @@ class ProdutoProvider with ChangeNotifier {
     } catch (e) {
       _errorMessage = 'Erro ao validar código: $e';
       return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> salvarColeta({
+    required ColetaModel coleta,
+    required String demandaId,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _coletaRepository.salvarColeta(coleta, demandaId);
+      return true;
+    } catch (e) {
+      _errorMessage = 'Erro ao salvar coleta: $e';
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();

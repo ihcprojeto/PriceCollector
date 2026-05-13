@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../widgets/responsive_body.dart';
 import '../models/loja_model.dart';
 import '../models/demanda_model.dart';
+import '../models/coleta_model.dart';
+import '../providers/dashboard_provider.dart';
+import '../providers/login_provider.dart';
+import '../providers/produto_provider.dart';
 
 class ColetaPage extends StatefulWidget {
   final LojaModel loja;
@@ -37,11 +42,21 @@ class _ColetaPageState extends State<ColetaPage> {
   }
 
   Future<void> _onSave() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final double? preco = double.tryParse(_precoController.text.replaceAll(',', '.'));
+    if (preco == null || preco <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Informe um preço válido.')),
+      );
+      return;
+    }
+
     final bool? confirmSave = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Deseja salvar coleta?'),
-        content: const Text('Confirme se os dados estão corretos'),
+        content: Text('Confirmar preço: R\$ ${preco.toStringAsFixed(2)}'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -57,29 +72,72 @@ class _ColetaPageState extends State<ColetaPage> {
 
     if (confirmSave == true) {
       if (!mounted) return;
-      final bool? nextStep = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Produto coletado com sucesso!'),
-          content: const Text('Selecione uma opção abaixo'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Ver produtos'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Nova coleta'),
-            ),
-          ],
-        ),
+      
+      final dashboardProvider = context.read<DashboardProvider>();
+      final loginProvider = context.read<LoginProvider>();
+      final produtoProvider = context.read<ProdutoProvider>();
+
+      final usuario = dashboardProvider.usuario;
+      final dispositivo = loginProvider.dispositivoSelecionado;
+
+      if (usuario == null || dispositivo == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro: Usuário ou dispositivo não identificados.')),
+        );
+        return;
+      }
+
+      final novaColeta = ColetaModel(
+        dataColeta: DateTime.now(),
+        dispositivoId: dispositivo.id,
+        dispositivoModelo: dispositivo.modelo,
+        lojaId: widget.loja.id!,
+        lojaNome: widget.loja.nome,
+        preco: preco,
+        produtoBarcode: widget.demanda.barcode,
+        produtoNome: widget.demanda.produtoNome,
+        usuarioId: usuario.id!,
+        usuarioMatricula: usuario.matricula,
+        usuarioNome: usuario.nome,
+      );
+
+      final success = await produtoProvider.salvarColeta(
+        coleta: novaColeta,
+        demandaId: widget.demanda.id,
       );
 
       if (!mounted) return;
-      if (nextStep == true) {
-        context.pushNamed('scanner', extra: widget.loja);
-      } else if (nextStep == false) {
-        context.pushNamed('produtos_coletados');
+
+      if (success) {
+        final bool? nextStep = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Produto coletado com sucesso!'),
+            content: const Text('O que deseja fazer agora?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Ver produtos'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Nova coleta'),
+              ),
+            ],
+          ),
+        );
+
+        if (!mounted) return;
+        if (nextStep == true) {
+          context.pushNamed('scanner', extra: widget.loja);
+        } else {
+          context.pushNamed('listaProdutos', extra: widget.loja);
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(produtoProvider.errorMessage ?? 'Erro ao salvar coleta.')),
+        );
       }
     }
   }
@@ -302,52 +360,74 @@ class _ColetaPageState extends State<ColetaPage> {
           style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.border),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              Text(
-                "R\$",
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF666666),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextFormField(
-                  controller: _precoController,
-                  focusNode: _precoFocusNode,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                    hintText: '0.00',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 16),
+        TextFormField(
+          controller: _precoController,
+          focusNode: _precoFocusNode,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: GoogleFonts.inter(fontSize: 15),
+          decoration: InputDecoration(
+            hintText: '0.00',
+            filled: true,
+            fillColor: Colors.white,
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(left: 16, right: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "R\$",
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF666666),
+                    ),
                   ),
-                  style: GoogleFonts.inter(fontSize: 15),
-                ),
+                ],
               ),
-            ],
+            ),
+            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppTheme.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppTheme.primary),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
           ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Informe o preço';
+            }
+            if (double.tryParse(value.replaceAll(',', '.')) == null) {
+              return 'Valor inválido';
+            }
+            return null;
+          },
         ),
       ],
     );
   }
 
   Widget _buildActionButtons(BuildContext context) {
+    final isLoading = context.watch<ProdutoProvider>().isLoading;
+
     return Column(
       children: [
         SizedBox(
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
-            onPressed: _onSave,
+            onPressed: isLoading ? null : _onSave,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               foregroundColor: Colors.white,
@@ -356,10 +436,16 @@ class _ColetaPageState extends State<ColetaPage> {
               ),
               elevation: 0,
             ),
-            child: Text(
-              'Salvar Coleta',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
+            child: isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  )
+                : Text(
+                    'Salvar Coleta',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
           ),
         ),
         const SizedBox(height: 16),
