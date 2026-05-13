@@ -43,17 +43,42 @@ class _ListaProdutosPageState extends State<ListaProdutosPage> {
     super.dispose();
   }
 
-  void _onImportCSV() async {
-    final provider = context.read<ProdutoProvider>();
-    await provider.importarCSV(widget.loja.id!);
-    if (provider.errorMessage != null && mounted) {
+  void _onImportExcel() async {
+    final lojaId = widget.loja.id;
+    if (lojaId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.errorMessage!), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Erro: ID da loja não encontrado.'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    final provider = context.read<ProdutoProvider>();
+    final success = await provider.importarExcel(lojaId);
+    
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Produtos importados com sucesso!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else if (provider.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage!),
+          backgroundColor: Colors.red,
+        ),
       );
       provider.clearError();
-    } else if (mounted) {
+    } else {
+      // Caso o usuário tenha cancelado a seleção do arquivo
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Produtos importados com sucesso!'), backgroundColor: Colors.green),
+        const SnackBar(
+          content: Text('Importação cancelada.'),
+          backgroundColor: Colors.orange,
+        ),
       );
     }
   }
@@ -129,8 +154,8 @@ class _ListaProdutosPageState extends State<ListaProdutosPage> {
           if (isAdmin)
             IconButton(
               icon: const Icon(Icons.upload_file_rounded, color: Colors.white),
-              onPressed: produtoProvider.isLoading ? null : _onImportCSV,
-              tooltip: 'Importar CSV',
+              onPressed: produtoProvider.isLoading ? null : _onImportExcel,
+              tooltip: 'Importar Excel (XLSX)',
             ),
         ],
         centerTitle: true,

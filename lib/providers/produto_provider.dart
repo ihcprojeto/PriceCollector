@@ -1,6 +1,5 @@
-import 'dart:convert';
 import 'dart:io';
-import 'package:csv/csv.dart';
+import 'package:excel/excel.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import '../models/coleta_model.dart';
@@ -131,7 +130,7 @@ class ProdutoProvider with ChangeNotifier {
     }
   }
 
-  Future<void> importarCSV(String lojaId) async {
+  Future<bool> importarExcel(String lojaId) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -139,65 +138,82 @@ class ProdutoProvider with ChangeNotifier {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['csv'],
+        allowedExtensions: ['xlsx'],
       );
 
-      if (result != null) {
-        final bytes = result.files.first.bytes;
-        String csvString;
-        if (bytes != null) {
-          csvString = utf8.decode(bytes);
+      if (result == null) return false;
+
+      final bytes = result.files.first.bytes;
+      List<int> fileBytes;
+      if (bytes != null) {
+        fileBytes = bytes;
+      } else {
+        final path = result.files.first.path;
+        if (path != null) {
+          fileBytes = await File(path).readAsBytes();
         } else {
-          final path = result.files.first.path;
-          if (path != null) {
-            csvString = await File(path).readAsString();
-          } else {
-            throw 'Não foi possível ler o arquivo';
-          }
-        }
-
-        List<List<dynamic>> rows = const CsvToListConverter().convert(csvString);
-        
-        if (rows.isEmpty) throw 'O arquivo CSV está vazio';
-
-        // Mapeamento local para evitar duplicatas no próprio CSV
-        Map<String, DemandaModel> uniqueDemandas = {};
-        int csvDuplicates = 0;
-
-        for (var i = 1; i < rows.length; i++) {
-          final row = rows[i];
-          if (row.length < 5) continue;
-
-          final barcode = row[0].toString().trim();
-          if (barcode.isEmpty) continue;
-
-          if (uniqueDemandas.containsKey(barcode)) {
-            csvDuplicates++;
-            continue;
-          }
-
-          uniqueDemandas[barcode] = DemandaModel(
-            id: '',
-            barcode: barcode,
-            produtoNome: row[1].toString().trim(),
-            produtoMarca: row[2].toString().trim(),
-            produtoDescricao: row[3].toString().trim(),
-            produtoImagemUrl: row[4].toString().trim(),
-            status: 'pendente',
-          );
-        }
-
-        if (uniqueDemandas.isNotEmpty) {
-          int firestoreIgnored = await _repository.importarDemandas(lojaId, uniqueDemandas.values.toList());
-          int totalIgnored = csvDuplicates + firestoreIgnored;
-
-          if (totalIgnored > 0) {
-            _errorMessage = '$totalIgnored produtos ignorados por duplicidade.';
-          }
+          throw 'Não foi possível ler o caminho do arquivo';
         }
       }
+
+      var excel = Excel.decodeBytes(fileBytes);
+      
+      if (excel.tables.isEmpty) throw 'O arquivo Excel não possui planilhas';
+      var table = excel.tables.values.first;
+      
+      if (table.rows.isEmpty) throw 'O arquivo Excel está vazio';
+
+      // Mapeamento local para evitar duplicatas no próprio Excel
+      Map<String, DemandaModel> uniqueDemandas = {};
+      int excelDuplicates = 0;
+
+      // Itera sobre as linhas, pulando o cabeçalho (index 0)
+      for (var i = 1; i < table.rows.length; i++) {
+        final row = table.rows[i];
+        if (row.isEmpty) continue;
+
+        // Função auxiliar para pegar valor de forma segura
+        String getVal(int index) {
+          if (index >= row.length) return '';
+          final cell = row[index];
+          if (cell == null || cell.value == null) return '';
+          return cell.value.toString().trim();
+        }
+
+        final barcode = getVal(0);
+        if (barcode.isEmpty) continue;
+
+        if (uniqueDemandas.containsKey(barcode)) {
+          excelDuplicates++;
+          continue;
+        }
+
+        uniqueDemandas[barcode] = DemandaModel(
+          id: '',
+          barcode: barcode,
+          produtoNome: getVal(1),
+          produtoMarca: getVal(2),
+          produtoDescricao: getVal(3),
+          produtoImagemUrl: getVal(4),
+          status: 'pendente',
+        );
+      }
+
+      if (uniqueDemandas.isNotEmpty) {
+        int firestoreIgnored = await _repository.importarDemandas(lojaId, uniqueDemandas.values.toList());
+        int totalIgnored = excelDuplicates + firestoreIgnored;
+
+        if (totalIgnored > 0) {
+          _errorMessage = '$totalIgnored produtos ignorados por duplicidade.';
+        }
+      } else {
+        throw 'Nenhum produto válido encontrado na planilha.';
+      }
+
+      return true;
     } catch (e) {
       _errorMessage = 'Erro na importação: $e';
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
