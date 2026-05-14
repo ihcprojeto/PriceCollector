@@ -134,7 +134,7 @@ class _ColetaPageState extends State<ColetaPage> {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, 'produtos'),
-                child: const Text('Ver produtos'),
+                child: const Text('Ver produtos coletados'),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, 'nova'),
@@ -344,14 +344,19 @@ class _ColetaPageState extends State<ColetaPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        widget.demanda.produtoDescricao,
-                        style: GoogleFonts.interTight(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
+                      Expanded(
+                        child: Text(
+                          widget.demanda.produtoDescricao,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.interTight(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       IconButton(
                         onPressed: () => context.pushNamed('scanner', extra: widget.loja),
                         icon: const Icon(Icons.edit_rounded, color: AppTheme.primary, size: 18),

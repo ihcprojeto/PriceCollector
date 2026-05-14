@@ -135,7 +135,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Olá, ${usuario?.nome ?? 'Usuário(a)'}!',
+                    'Olá, ${usuario?.nome?.split(' ').first ?? 'Usuário(a)'}!',
                     style: GoogleFonts.interTight(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
