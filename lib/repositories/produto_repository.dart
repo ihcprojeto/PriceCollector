@@ -103,4 +103,22 @@ class ProdutoRepository {
     }
     return null;
   }
+
+  Future<int> getTotalDemandas({String? lojaId}) async {
+    if (lojaId != null && lojaId.isNotEmpty) {
+      final snapshot = await _firestore
+          .collection('lojas')
+          .doc(lojaId)
+          .collection('demandas')
+          .where('status', isNotEqualTo: 'cancelado')
+          .get();
+      return snapshot.size;
+    } else {
+      final snapshot = await _firestore
+          .collectionGroup('demandas')
+          .where('status', isNotEqualTo: 'cancelado')
+          .get();
+      return snapshot.size;
+    }
+  }
 }

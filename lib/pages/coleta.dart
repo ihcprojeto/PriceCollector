@@ -15,11 +15,13 @@ import '../providers/produto_provider.dart';
 class ColetaPage extends StatefulWidget {
   final LojaModel loja;
   final DemandaModel demanda;
+  final ColetaModel? coleta;
 
   const ColetaPage({
     super.key,
     required this.loja,
     required this.demanda,
+    this.coleta,
   });
 
   static const String routeName = 'coleta';
@@ -31,8 +33,16 @@ class ColetaPage extends StatefulWidget {
 
 class _ColetaPageState extends State<ColetaPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _precoController = TextEditingController();
+  late TextEditingController _precoController;
   final FocusNode _precoFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _precoController = TextEditingController(
+      text: widget.coleta != null ? widget.coleta!.preco.toStringAsFixed(2) : '',
+    );
+  }
 
   @override
   void dispose() {
@@ -55,7 +65,7 @@ class _ColetaPageState extends State<ColetaPage> {
     final bool? confirmSave = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Deseja salvar coleta?'),
+        title: Text(widget.coleta != null ? 'Deseja atualizar coleta?' : 'Deseja salvar coleta?'),
         content: Text('Confirmar preço: R\$ ${preco.toStringAsFixed(2)}'),
         actions: [
           TextButton(
@@ -88,6 +98,7 @@ class _ColetaPageState extends State<ColetaPage> {
       }
 
       final novaColeta = ColetaModel(
+        id: widget.coleta?.id,
         dataColeta: DateTime.now(),
         dispositivoId: dispositivo.id,
         dispositivoModelo: dispositivo.modelo,
@@ -96,6 +107,7 @@ class _ColetaPageState extends State<ColetaPage> {
         preco: preco,
         produtoBarcode: widget.demanda.barcode,
         produtoNome: widget.demanda.produtoNome,
+        produtoImagemUrl: widget.demanda.produtoImagemUrl,
         usuarioId: usuario.id!,
         usuarioMatricula: usuario.matricula,
         usuarioNome: usuario.nome,
@@ -138,7 +150,7 @@ class _ColetaPageState extends State<ColetaPage> {
         } else if (nextStep == 'demanda') {
           context.pushNamed('listaProdutos', extra: widget.loja);
         } else if (nextStep == 'produtos') {
-          context.pushNamed('produtos_coletados');
+          context.pushNamed('produtos_coletados', extra: widget.loja.id);
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

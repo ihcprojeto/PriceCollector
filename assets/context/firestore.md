@@ -84,6 +84,7 @@
   "preco": "double",
   "produtoBarcode": "string",
   "produtoNome": "string",
+  "produtoImagemUrl": "string",
   "usuarioId": "string",
   "usuarioNome": "string"
 }
@@ -101,6 +102,7 @@
   "preco": 6.99,
   "produtoBarcode": "7891025115656",
   "produtoNome": "YoPro Chocolate",
+  "produtoImagemUrl": "https://res.cloudinary.com/dgccbfglb/image/upload/q_auto/f_auto/v1778633476/0f07f42a-772a-4021-bdcc-5ce4b58f982b.png",
   "usuarioMatricula": "1234567",
   "usuarioNome": "João Souza"
 }
