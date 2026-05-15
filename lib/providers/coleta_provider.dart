@@ -14,6 +14,7 @@ class ColetaProvider with ChangeNotifier {
   String? _errorMessage;
   
   String? _lojaIdFiltro;
+  String? _usuarioIdFiltro;
   String _searchQuery = '';
   String _orderBy = 'Nome A-Z';
   
@@ -29,20 +30,21 @@ class ColetaProvider with ChangeNotifier {
 
   StreamSubscription<List<ColetaModel>>? _subscription;
 
-  void fetchColetas({String? lojaId}) {
+  void fetchColetas({String? lojaId, String? usuarioId}) {
     _lojaIdFiltro = lojaId;
+    _usuarioIdFiltro = usuarioId;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     _subscription?.cancel();
-    _subscription = _coletaRepository.getColetas(lojaId: lojaId).listen((data) async {
+    _subscription = _coletaRepository.getColetas(lojaId: _lojaIdFiltro, usuarioId: _usuarioIdFiltro).listen((data) async {
       try {
         _coletas = data;
         
         try {
           // Tenta buscar o total, mas não trava o fluxo se falhar (ex: falta de índice)
-          _totalDemandas = await _produtoRepository.getTotalDemandas(lojaId: lojaId);
+          _totalDemandas = await _produtoRepository.getTotalDemandas(lojaId: _lojaIdFiltro);
         } catch (e) {
           debugPrint('Aviso: Falha ao calcular total de demandas (provavelmente falta de índice): $e');
           _totalDemandas = 0; // Define como 0 para não quebrar o cálculo do progresso
@@ -72,7 +74,7 @@ class ColetaProvider with ChangeNotifier {
 
   void setLojaFiltro(String? lojaId) {
     _lojaIdFiltro = lojaId;
-    fetchColetas(lojaId: lojaId);
+    fetchColetas(lojaId: _lojaIdFiltro, usuarioId: _usuarioIdFiltro);
   }
 
   void setSearchQuery(String query) {

@@ -29,11 +29,15 @@ class ColetaRepository {
     await batch.commit();
   }
 
-  Stream<List<ColetaModel>> getColetas({String? lojaId}) {
+  Stream<List<ColetaModel>> getColetas({String? lojaId, String? usuarioId}) {
     Query query = _firestore.collection('coletas');
     
     if (lojaId != null && lojaId.isNotEmpty) {
       query = query.where('lojaId', isEqualTo: lojaId);
+    }
+
+    if (usuarioId != null && usuarioId.isNotEmpty) {
+      query = query.where('usuarioId', isEqualTo: usuarioId);
     }
 
     return query.snapshots().map((snapshot) {

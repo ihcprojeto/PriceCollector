@@ -305,7 +305,7 @@ class _ProdutosColetadosPageState extends State<ProdutosColetadosPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primary.withAlpha((0.3 * 255).toInt())),
+        border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
         boxShadow: const [BoxShadow(blurRadius: 8, color: Color(0x0D000000), offset: Offset(0, 2))],
       ),
       child: Padding(
@@ -321,7 +321,7 @@ class _ProdutosColetadosPageState extends State<ProdutosColetadosPage> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: coleta.produtoImagemUrl != null && coleta.produtoImagemUrl!.startsWith('http')
+                child: coleta.produtoImagemUrl != null && coleta.produtoImagemUrl!.isNotEmpty
                     ? Image.network(
                         coleta.produtoImagemUrl!,
                         width: 80,

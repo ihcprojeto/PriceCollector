@@ -19,6 +19,9 @@ class DashboardProvider with ChangeNotifier {
       _isLoading = true;
       notifyListeners();
       
+      // Sincronizar e-mail antes de carregar dados para garantir consistência
+      await _authRepository.checkAndSyncEmail(currentUser.uid);
+      
       _usuario = await _authRepository.getUsuarioData(currentUser.uid);
       
       _isLoading = false;
