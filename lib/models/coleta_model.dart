@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ColetaModel {
   final String? id;
   final DateTime dataColeta;
@@ -47,9 +49,15 @@ class ColetaModel {
   }
 
   factory ColetaModel.fromFirestore(Map<String, dynamic> json, String id) {
+    DateTime parseDate(dynamic date) {
+      if (date is String) return DateTime.parse(date);
+      if (date is Timestamp) return date.toDate();
+      return DateTime.now();
+    }
+
     return ColetaModel(
       id: id,
-      dataColeta: DateTime.parse(json['dataColeta']),
+      dataColeta: parseDate(json['dataColeta']),
       dispositivoId: json['dispositivoId'] ?? '',
       dispositivoModelo: json['dispositivoModelo'] ?? '',
       lojaId: json['lojaId'] ?? '',

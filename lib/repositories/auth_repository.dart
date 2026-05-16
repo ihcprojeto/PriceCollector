@@ -221,5 +221,10 @@ class AuthRepository {
     await _auth.signOut();
   }
 
+  Future<List<UsuarioModel>> getUsuariosList() async {
+    final snapshot = await _firestore.collection('usuarios').get();
+    return snapshot.docs.map((doc) => UsuarioModel.fromJson(doc.data(), doc.id)).toList();
+  }
+
   User? get currentUser => _auth.currentUser;
 }

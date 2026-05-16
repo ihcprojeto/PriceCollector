@@ -21,10 +21,22 @@ class LojaRepository {
   Stream<List<LojaModel>> getLojas() {
     return _firestore
         .collection('lojas')
-        .where('ativo', isEqualTo: true) // Filtrando apenas ativas conforme firestore.md
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => LojaModel.fromMap(doc.data(), doc.id)).toList();
+      return snapshot.docs
+          .map((doc) => LojaModel.fromMap(doc.data(), doc.id))
+          .where((loja) => loja.ativo)
+          .toList();
     });
+  }
+
+  Future<List<LojaModel>> getLojasList() async {
+    final snapshot = await _firestore
+        .collection('lojas')
+        .get();
+    return snapshot.docs
+        .map((doc) => LojaModel.fromMap(doc.data(), doc.id))
+        .where((loja) => loja.ativo)
+        .toList();
   }
 }

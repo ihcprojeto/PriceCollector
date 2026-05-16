@@ -20,6 +20,7 @@ import 'providers/dashboard_provider.dart';
 import 'providers/produto_provider.dart';
 import 'providers/coleta_provider.dart';
 import 'providers/perfil_provider.dart';
+import 'providers/produtividade_provider.dart';
 
 // Import de todas as páginas convertidas
 import 'pages/login.dart';
@@ -68,6 +69,9 @@ void main() async {
         ),
         ChangeNotifierProvider<PerfilProvider>(
           create: (context) => PerfilProvider(context.read<AuthRepository>()),
+        ),
+        ChangeNotifierProvider<ProdutividadeProvider>(
+          create: (_) => ProdutividadeProvider(),
         ),
       ],
       child: const MyApp(),

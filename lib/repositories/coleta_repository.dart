@@ -45,6 +45,21 @@ class ColetaRepository {
     });
   }
 
+  Future<List<ColetaModel>> getColetasList({String? lojaId, String? usuarioId}) async {
+    Query query = _firestore.collection('coletas');
+    
+    if (lojaId != null && lojaId.isNotEmpty) {
+      query = query.where('lojaId', isEqualTo: lojaId);
+    }
+
+    if (usuarioId != null && usuarioId.isNotEmpty) {
+      query = query.where('usuarioId', isEqualTo: usuarioId);
+    }
+
+    final snapshot = await query.get();
+    return snapshot.docs.map((doc) => ColetaModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)).toList();
+  }
+
   Future<void> excluirColeta(String coletaId, String lojaId, String barcode) async {
     final batch = _firestore.batch();
 
