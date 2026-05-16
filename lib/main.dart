@@ -36,7 +36,6 @@ import 'pages/dispositivo.dart';
 import 'pages/perfil.dart';
 import 'pages/produtividade.dart';
 import 'pages/splash.dart';
-import 'providers/produtividade_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,9 +68,6 @@ void main() async {
         ),
         ChangeNotifierProvider<PerfilProvider>(
           create: (context) => PerfilProvider(context.read<AuthRepository>()),
-        ),
-        ChangeNotifierProvider<ProdutividadeProvider>(
-          create: (_) => ProdutividadeProvider(),
         ),
       ],
       child: const MyApp(),
