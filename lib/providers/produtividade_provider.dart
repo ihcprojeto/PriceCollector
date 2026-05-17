@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'dart:collection';
 import '../models/coleta_model.dart';
 import '../models/loja_model.dart';
 import '../models/demanda_model.dart';
@@ -242,21 +243,41 @@ class ProdutividadeProvider with ChangeNotifier {
       tempoMedioGlobal = Duration.zero;
     }
 
-    // Evolução Temporal (Agrupado por dia)
-    evolucaoTemporal = groupBy(coletas, (ColetaModel c) {
+    // Evolução Temporal (Agrupado por dia e ordenado)
+    final grouped = groupBy(coletas, (ColetaModel c) {
       return DateTime(c.dataColeta.year, c.dataColeta.month, c.dataColeta.day);
-    }).map((key, value) => MapEntry(key, value.length));
+    });
+    
+    evolucaoTemporal = SplayTreeMap<DateTime, int>.from(
+      grouped.map((key, value) => MapEntry(key, value.length)),
+      (a, b) => a.compareTo(b),
+    );
 
     // Ranking Equipe
     final porUsuario = groupBy(coletas, (ColetaModel c) => c.usuarioId);
-    rankingEquipe = porUsuario.entries.map((e) {
-      final userColetas = e.value.sortedBy((c) => c.dataColeta);
-      final userFim = userColetas.last.dataColeta;
+    
+    rankingEquipe = _usuarios.map((u) {
+      final userColetas = porUsuario[u.id] ?? [];
+      
+      if (userColetas.isEmpty) {
+        return UserPerformance(
+          id: u.id!,
+          nome: u.nome,
+          matricula: u.matricula,
+          itensColetados: 0,
+          velocidadeMedia: 0,
+          tempoMedio: Duration.zero,
+          ultimaAtividade: null,
+        );
+      }
+
+      final sortedUserColetas = userColetas.sortedBy((c) => c.dataColeta);
+      final userFim = sortedUserColetas.last.dataColeta;
       
       int userSegundosAtivos = 120; // Início primeira sessão
 
-      for (int i = 0; i < userColetas.length - 1; i++) {
-        final d = userColetas[i + 1].dataColeta.difference(userColetas[i].dataColeta).inSeconds;
+      for (int i = 0; i < sortedUserColetas.length - 1; i++) {
+        final d = sortedUserColetas[i + 1].dataColeta.difference(sortedUserColetas[i].dataColeta).inSeconds;
         if (d < 3600) {
           userSegundosAtivos += d;
         } else {
@@ -268,9 +289,9 @@ class ProdutividadeProvider with ChangeNotifier {
       final double vel = userHoras > 0 ? userColetas.length / userHoras : 0;
 
       return UserPerformance(
-        id: e.key,
-        nome: userColetas.first.usuarioNome,
-        matricula: userColetas.first.usuarioMatricula,
+        id: u.id!,
+        nome: u.nome,
+        matricula: u.matricula,
         itensColetados: userColetas.length,
         velocidadeMedia: vel,
         tempoMedio: Duration(seconds: (userSegundosAtivos / userColetas.length).round()),

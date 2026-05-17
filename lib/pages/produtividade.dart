@@ -108,36 +108,48 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
           // Filtro de Período
           _buildFilterItem(
             label: 'Período',
-            child: InkWell(
-              onTap: () async {
-                final range = await showDateRangePicker(
-                  context: context,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime.now(),
-                  initialDateRange: provider.periodo,
-                );
-                if (range != null) provider.setPeriodo(range);
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppTheme.border),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.calendar_today_rounded, size: 16, color: AppTheme.primary),
-                    const SizedBox(width: 8),
-                    Text(
-                      provider.periodo == null
-                          ? 'Sempre'
-                          : '${DateFormat('dd/MM').format(provider.periodo!.start)} - ${DateFormat('dd/MM').format(provider.periodo!.end)}',
-                      style: GoogleFonts.inter(fontSize: 13),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: () async {
+                    final range = await showDateRangePicker(
+                      context: context,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now(),
+                      initialDateRange: provider.periodo,
+                      locale: const Locale('pt', 'BR'),
+                    );
+                    if (range != null) provider.setPeriodo(range);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppTheme.border),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ],
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.calendar_today_rounded, size: 16, color: AppTheme.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          provider.periodo == null
+                              ? 'Sempre'
+                              : '${DateFormat('dd/MM').format(provider.periodo!.start)} - ${DateFormat('dd/MM').format(provider.periodo!.end)}',
+                          style: GoogleFonts.inter(fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                if (provider.periodo != null)
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 18, color: Colors.red),
+                    onPressed: () => provider.setPeriodo(null),
+                    tooltip: 'Limpar filtro',
+                  ),
+              ],
             ),
           ),
           // Filtro de Loja
@@ -243,7 +255,9 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
         Expanded(
           child: _buildMetricTile(
             'Velocidade Média',
-            '${provider.velocidadeMediaGlobal.toStringAsFixed(1)} itens/hr',
+            provider.totalColetados > 1
+                ? '${provider.velocidadeMediaGlobal.toStringAsFixed(1)} itens/hr'
+                : '--',
             Icons.speed_rounded,
           ),
         ),
@@ -296,6 +310,7 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
     return Column(
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               flex: 2,
@@ -308,37 +323,55 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
                     height: 300,
                     padding: const EdgeInsets.fromLTRB(16, 32, 32, 16),
                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                    child: BarChart(
-                      BarChartData(
-                        alignment: BarChartAlignment.spaceAround,
-                        maxY: (provider.evolucaoTemporal.values.isNotEmpty ? provider.evolucaoTemporal.values.reduce((a, b) => a > b ? a : b) : 10).toDouble() + 5,
-                        barGroups: provider.evolucaoTemporal.entries.map((e) {
-                          return BarChartGroupData(
-                            x: e.key.day,
-                            barRods: [
-                              BarChartRodData(
-                                toY: e.value.toDouble(),
-                                color: AppTheme.primary,
-                                width: isMobile ? 12 : 16,
-                                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-                              )
-                            ],
-                          );
-                        }).toList(),
-                        titlesData: FlTitlesData(
-                          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 30)),
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              getTitlesWidget: (value, meta) => Text(value.toInt().toString(), style: const TextStyle(fontSize: 10)),
+                    child: Stack(
+                      children: [
+                        // Rótulos de Eixos
+                        Positioned(top: 0, left: 0, child: Text('Quantidade Itens', style: GoogleFonts.inter(fontSize: 10, color: Colors.grey))),
+                        Positioned(bottom: 0, right: 0, child: Text('Dia', style: GoogleFonts.inter(fontSize: 10, color: Colors.grey))),
+                        
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12, bottom: 12),
+                          child: BarChart(
+                            BarChartData(
+                              alignment: BarChartAlignment.spaceAround,
+                              maxY: (provider.evolucaoTemporal.values.isNotEmpty ? provider.evolucaoTemporal.values.reduce((a, b) => a > b ? a : b) : 10).toDouble() + 5,
+                              barGroups: provider.evolucaoTemporal.entries.toList().asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final count = entry.value.value;
+                                return BarChartGroupData(
+                                  x: index,
+                                  barRods: [
+                                    BarChartRodData(
+                                      toY: count.toDouble(),
+                                      color: AppTheme.primary,
+                                      width: isMobile ? 12 : 16,
+                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                                    )
+                                  ],
+                                );
+                              }).toList(),
+                              titlesData: FlTitlesData(
+                                leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 30)),
+                                bottomTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    getTitlesWidget: (value, meta) {
+                                      final index = value.toInt();
+                                      if (index < 0 || index >= provider.evolucaoTemporal.length) return const SizedBox.shrink();
+                                      final date = provider.evolucaoTemporal.keys.elementAt(index);
+                                      return Text(date.day.toString(), style: const TextStyle(fontSize: 10));
+                                    },
+                                  ),
+                                ),
+                                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              ),
+                              gridData: const FlGridData(show: false),
+                              borderData: FlBorderData(show: false),
                             ),
                           ),
-                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                         ),
-                        gridData: const FlGridData(show: false),
-                        borderData: FlBorderData(show: false),
-                      ),
+                      ],
                     ),
                   ),
                 ],
@@ -355,20 +388,45 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
                     Container(
                       height: 300,
                       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                      child: PieChart(
-                        PieChartData(
-                          sectionsSpace: 2,
-                          centerSpaceRadius: 40,
-                          sections: provider.progressoPorLoja.where((s) => s.coletados > 0).map((s) {
-                            return PieChartSectionData(
-                              value: s.coletados.toDouble(),
-                              title: '${((s.coletados / provider.totalColetados) * 100).toStringAsFixed(0)}%',
-                              radius: 50,
-                              titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
-                              color: Colors.primaries[provider.progressoPorLoja.indexOf(s) % Colors.primaries.length],
-                            );
-                          }).toList(),
-                        ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: PieChart(
+                              PieChartData(
+                                sectionsSpace: 2,
+                                centerSpaceRadius: 40,
+                                sections: provider.progressoPorLoja.where((s) => s.coletados > 0).map((s) {
+                                  final color = Colors.primaries[provider.progressoPorLoja.indexOf(s) % Colors.primaries.length];
+                                  return PieChartSectionData(
+                                    value: s.coletados.toDouble(),
+                                    title: '${((s.coletados / provider.totalColetados) * 100).toStringAsFixed(0)}%',
+                                    radius: 50,
+                                    titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                                    color: color,
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          // Legenda
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: provider.progressoPorLoja.where((s) => s.coletados > 0).map((s) {
+                              final color = Colors.primaries[provider.progressoPorLoja.indexOf(s) % Colors.primaries.length];
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(width: 10, height: 10, color: color),
+                                  const SizedBox(width: 4),
+                                  Text(s.nome, style: const TextStyle(fontSize: 10)),
+                                ],
+                              );
+                            }).toList(),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -385,22 +443,46 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
               Text('Distribuição por Loja', style: GoogleFonts.interTight(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               Container(
-                height: 200,
+                height: 250,
                 decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                child: PieChart(
-                  PieChartData(
-                    sectionsSpace: 2,
-                    centerSpaceRadius: 30,
-                    sections: provider.progressoPorLoja.where((s) => s.coletados > 0).map((s) {
-                      return PieChartSectionData(
-                        value: s.coletados.toDouble(),
-                        title: '${((s.coletados / provider.totalColetados) * 100).toStringAsFixed(0)}%',
-                        radius: 40,
-                        titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                        color: Colors.primaries[provider.progressoPorLoja.indexOf(s) % Colors.primaries.length],
-                      );
-                    }).toList(),
-                  ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: PieChart(
+                        PieChartData(
+                          sectionsSpace: 2,
+                          centerSpaceRadius: 30,
+                          sections: provider.progressoPorLoja.where((s) => s.coletados > 0).map((s) {
+                            final color = Colors.primaries[provider.progressoPorLoja.indexOf(s) % Colors.primaries.length];
+                            return PieChartSectionData(
+                              value: s.coletados.toDouble(),
+                              title: '${((s.coletados / provider.totalColetados) * 100).toStringAsFixed(0)}%',
+                              radius: 40,
+                              titleStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                              color: color,
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: provider.progressoPorLoja.where((s) => s.coletados > 0).map((s) {
+                        final color = Colors.primaries[provider.progressoPorLoja.indexOf(s) % Colors.primaries.length];
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(width: 8, height: 8, color: color),
+                            const SizedBox(width: 4),
+                            Text(s.nome, style: const TextStyle(fontSize: 9)),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -535,18 +617,23 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
                 title: Row(
                   children: [
                     Expanded(child: Text(user.nome, style: GoogleFonts.inter(fontWeight: FontWeight.bold))),
-                    if (isAboveAverage)
+                    if (isAboveAverage && user.itensColetados > 0)
                       const Icon(Icons.trending_up_rounded, color: Colors.green, size: 16)
-                    else
+                    else if (user.itensColetados > 0)
                       const Icon(Icons.trending_flat_rounded, color: Colors.orange, size: 16),
                   ],
                 ),
-                subtitle: Text('ID: ${user.matricula} • ${user.itensColetados} itens', style: GoogleFonts.inter(fontSize: 12)),
+                subtitle: Text('Matrícula: ${user.matricula} • ${user.itensColetados} itens', style: GoogleFonts.inter(fontSize: 12)),
                 trailing: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('${user.velocidadeMedia.toStringAsFixed(1)} i/h', style: GoogleFonts.interTight(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                    Text(
+                      user.itensColetados > 1
+                          ? '${user.velocidadeMedia.toStringAsFixed(1)} i/h'
+                          : '--', 
+                      style: GoogleFonts.interTight(fontWeight: FontWeight.bold, color: AppTheme.primary),
+                    ),
                     Text(
                       user.tempoMedio.inSeconds > 0 
                           ? 'Ø ${user.tempoMedio.inMinutes}m' 
