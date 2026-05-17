@@ -97,7 +97,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    _buildActionGrid(context),
+                    _buildActionGrid(context, usuario),
                   ],
                 ),
               ),
@@ -187,7 +187,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildActionGrid(BuildContext context) {
+  Widget _buildActionGrid(BuildContext context, usuario) {
     final List<Map<String, dynamic>> actions = [
       {
         'title': 'Iniciar Coleta',
@@ -205,16 +205,24 @@ class _DashboardPageState extends State<DashboardPage> {
       },
       {
         'title': 'Produtividade',
-        'subtitle': 'Veja seus resultados',
+        'subtitle': 'Veja os resultados',
         'icon': Icons.bar_chart_rounded,
         'color': const Color(0xFFEE8B60),
         'route': 'produtividade',
       },
+      if (usuario?.funcao == 'administrador')
+        {
+          'title': 'Dispositivos',
+          'subtitle': 'Gerenciar aparelhos',
+          'icon': Icons.devices_sharp,
+          'color': const Color(0xFF57636C),
+          'route': 'dispositivos',
+        },
       {
         'title': 'Operações',
         'subtitle': 'Configurações e logs',
         'icon': Icons.settings_suggest_rounded,
-        'color': const Color(0xFF606AEE),
+        'color': const Color(0xFF9460EE),
         'route': 'operacoes',
       },
     ];

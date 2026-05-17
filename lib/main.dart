@@ -22,6 +22,7 @@ import 'providers/produto_provider.dart';
 import 'providers/coleta_provider.dart';
 import 'providers/perfil_provider.dart';
 import 'providers/produtividade_provider.dart';
+import 'providers/dispositivo_provider.dart';
 
 // Import de todas as páginas convertidas
 import 'pages/login.dart';
@@ -73,6 +74,9 @@ void main() async {
         ),
         ChangeNotifierProvider<ProdutividadeProvider>(
           create: (_) => ProdutividadeProvider(),
+        ),
+        ChangeNotifierProvider<DispositivoProvider>(
+          create: (_) => DispositivoProvider(),
         ),
       ],
       child: const MyApp(),
