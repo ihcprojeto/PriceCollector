@@ -57,6 +57,7 @@ class ProdutoProvider with ChangeNotifier {
     _filteredDemandas = _demandas.where((d) {
       final matchesSearch = d.produtoNome.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           d.produtoMarca.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          d.produtoDescricao.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           d.barcode.toLowerCase().contains(_searchQuery.toLowerCase());
 
       final matchesStatus = _statusFilter == 'Geral' || d.status.toLowerCase() == _statusFilter.toLowerCase();

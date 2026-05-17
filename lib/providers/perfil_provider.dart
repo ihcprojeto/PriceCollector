@@ -107,6 +107,16 @@ class PerfilProvider with ChangeNotifier {
     }
   }
 
+  Future<void> reenviarConfirmacaoEmail(String newEmail) async {
+    try {
+      await _authRepository.resendVerificationEmail(newEmail);
+    } catch (e) {
+      _errorMessage = 'Erro ao reenviar link: $e';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   @override
   void dispose() {
     _dispositivosSub?.cancel();

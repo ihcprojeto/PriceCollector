@@ -135,6 +135,7 @@ class AuthRepository {
          // O método updateEmail foi removido nas versões recentes do Firebase Auth (5.0+).
         // Agora deve-se usar verifyBeforeUpdateEmail, que envia um link de confirmação.
         // O e-mail no Firebase Auth só será alterado após o usuário clicar no link.
+        await _auth.setLanguageCode('pt'); // Definir idioma para português
         await user.verifyBeforeUpdateEmail(newEmail);
       }
 
@@ -214,6 +215,14 @@ class AuthRepository {
         await _firestore.collection('usuarios').doc(uid).update({'email': user.email});
         print('Sync: Firestore e-mail atualizado para ${user.email}');
       }
+    }
+  }
+
+  Future<void> resendVerificationEmail(String newEmail) async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await _auth.setLanguageCode('pt');
+      await user.verifyBeforeUpdateEmail(newEmail);
     }
   }
 

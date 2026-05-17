@@ -493,8 +493,53 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
   }
 
   Widget _buildAlertsSection(BuildContext context, ProdutividadeProvider provider) {
+    final now = DateTime.now();
+    final isThursday = now.weekday == DateTime.thursday;
+    final endHourToday = isThursday ? 22 : 18;
+    final isWorkingHours = now.hour >= 8 && now.hour < endHourToday;
+
+    int calculateWorkingInactivity(DateTime lastActivity) {
+      if (now.isBefore(lastActivity)) return 0;
+      int inactiveMinutes = 0;
+      DateTime temp = lastActivity;
+
+      int getEndHour(DateTime dt) => dt.weekday == DateTime.thursday ? 22 : 18;
+
+      while (temp.isBefore(now)) {
+        final currentEndHour = getEndHour(temp);
+        
+        // Se for antes das 8:00, pula para as 8:00 do mesmo dia
+        if (temp.isBefore(DateTime(temp.year, temp.month, temp.day, 8, 0))) {
+          temp = DateTime(temp.year, temp.month, temp.day, 8, 0);
+        }
+        
+        // Se for depois do horário de encerramento, pula para as 8:00 do dia seguinte
+        if (temp.hour >= currentEndHour) {
+          temp = DateTime(temp.year, temp.month, temp.day + 1, 8, 0);
+          continue; 
+        }
+
+        // Calcula até o fim do expediente ou até 'now'
+        DateTime endOfWorkDay = DateTime(temp.year, temp.month, temp.day, currentEndHour, 0);
+        DateTime limit = now.isBefore(endOfWorkDay) ? now : endOfWorkDay;
+        
+        if (temp.isBefore(limit)) {
+          inactiveMinutes += limit.difference(temp).inMinutes;
+        }
+        
+        temp = limit;
+      }
+      return inactiveMinutes ~/ 60;
+    }
+
     final criticalStores = provider.progressoPorLoja.where((s) => s.percentual < 0.3 && s.total > 0).toList();
-    final inactiveUsers = provider.rankingEquipe.where((u) => u.ultimaAtividade != null && DateTime.now().difference(u.ultimaAtividade!).inHours > 2).toList();
+    
+    // Alerta de inatividade apenas durante o horário comercial e se houver mais de 2h de inatividade "útil"
+    final inactiveUsers = provider.rankingEquipe.where((u) {
+      if (u.ultimaAtividade == null) return false;
+      if (!isWorkingHours) return false;
+      return calculateWorkingInactivity(u.ultimaAtividade!) >= 2;
+    }).toList();
 
     if (criticalStores.isEmpty && inactiveUsers.isEmpty) return const SizedBox.shrink();
 
@@ -511,12 +556,15 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
                 Colors.red,
               )),
         if (inactiveUsers.isNotEmpty)
-          ...inactiveUsers.map((u) => _buildAlertCard(
-                'Inatividade: ${u.nome}',
-                'Última coleta há ${DateTime.now().difference(u.ultimaAtividade!).inHours} horas.',
-                Icons.person_off_rounded,
-                Colors.orange,
-              )),
+          ...inactiveUsers.map((u) {
+            final inactiveHours = calculateWorkingInactivity(u.ultimaAtividade!);
+            return _buildAlertCard(
+              'Inatividade: ${u.nome}',
+              'Última coleta há $inactiveHours horas (em horário comercial).',
+              Icons.person_off_rounded,
+              Colors.orange,
+            );
+          }),
       ],
     );
   }

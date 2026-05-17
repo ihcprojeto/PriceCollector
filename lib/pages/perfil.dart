@@ -474,20 +474,35 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
       return;
     }
 
+    final confirm = await _showConfirmDialog(
+      'Salvar Alterações?', 
+      'Deseja atualizar seus dados de perfil? Algumas alterações podem exigir que faça o login novamente.'
+    );
+
+    if (confirm != true) return;
+
     final perfilProvider = context.read<PerfilProvider>();
+    final dashboardProvider = context.read<DashboardProvider>();
+    final bool emailChanged = _emailController.text.trim() != (dashboardProvider.usuario?.email ?? '');
+    final bool passwordChanged = _novaSenhaController.text.isNotEmpty;
+
     final success = await perfilProvider.atualizarPerfil(
       uid: uid,
       nome: _nomeController.text.trim(),
       email: _emailController.text.trim(),
       matricula: _matriculaController.text.trim(),
       senhaAtual: _senhaAtualController.text,
-      novaSenha: _novaSenhaController.text.isNotEmpty ? _novaSenhaController.text : null,
+      novaSenha: passwordChanged ? _novaSenhaController.text : null,
     );
 
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(perfilProvider.successMessage ?? 'Perfil atualizado!'))
-      );
+      if (emailChanged || passwordChanged) {
+        _showUpdateConfirmationDialog(emailChanged, passwordChanged);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(perfilProvider.successMessage ?? 'Perfil atualizado!'))
+        );
+      }
       _senhaAtualController.clear();
       _novaSenhaController.clear();
       await context.read<DashboardProvider>().carregarDadosUsuario(); // Atualizar header
@@ -497,6 +512,109 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
         SnackBar(content: Text(context.read<PerfilProvider>().errorMessage ?? 'Erro ao atualizar perfil.'))
       );
     }
+  }
+
+  void _showUpdateConfirmationDialog(bool emailChanged, bool passwordChanged) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.security_rounded, color: AppTheme.primary, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Segurança da Conta',
+                style: GoogleFonts.interTight(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (emailChanged) ...[
+              Text(
+                '1. Confirmar novo e-mail',
+                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Enviamos um link de confirmação para ${_emailController.text.trim()}. Por favor, acesse sua caixa de entrada e confirme a alteração.',
+                style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF666666)),
+              ),
+              const SizedBox(height: 16),
+            ],
+            Text(
+              emailChanged ? '2. Fazer login novamente' : 'Fazer login novamente',
+              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              passwordChanged 
+                ? 'Sua senha foi alterada com sucesso. Por segurança, você será desconectado e precisará entrar novamente com sua nova senha.'
+                : 'Para concluir a atualização do e-mail com segurança, você precisará fazer login novamente após a confirmação.',
+              style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF666666)),
+            ),
+            if (emailChanged) ...[
+              const SizedBox(height: 20),
+              Center(
+                child: TextButton.icon(
+                  onPressed: () async {
+                    try {
+                      await context.read<PerfilProvider>().reenviarConfirmacaoEmail(_emailController.text.trim());
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Link de confirmação reenviado!'))
+                        );
+                      }
+                    } catch (e) {
+                       if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Aguarde um momento antes de reenviar novamente.'))
+                        );
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.email_outlined, size: 18, color: AppTheme.primary),
+                  label: Text(
+                    'Reenviar link de confirmação',
+                    style: GoogleFonts.inter(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8, left: 8, right: 8),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await context.read<DashboardProvider>().logout();
+                  if (mounted) context.go('/login');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  'Fazer Login',
+                  style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleEditColeta(ColetaModel coleta) async {
@@ -533,7 +651,7 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
         title: Text(title), content: Text(content),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.pop(context, true), style: TextButton.styleFrom(foregroundColor: Colors.red), child: const Text('Confirmar')),
+          TextButton(onPressed: () => Navigator.pop(context, true), style: TextButton.styleFrom(foregroundColor: Colors.green), child: const Text('Confirmar')),
         ],
       ),
     );
