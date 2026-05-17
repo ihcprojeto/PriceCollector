@@ -136,7 +136,7 @@ class _DispositivoPageState extends State<DispositivoPage> {
       crossAxisCount: isMobile ? 2 : 4,
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
-      childAspectRatio: isMobile ? 1.2 : 1.5,
+      childAspectRatio: isMobile ? 0.9 : 1.1,
       children: [
         _buildMetricCard('Ativos', provider.totalAtivos.toString(), Icons.check_circle_rounded, Colors.green),
         _buildMetricCard('Inativos', provider.totalInativos.toString(), Icons.cancel_rounded, Colors.red),
@@ -148,7 +148,7 @@ class _DispositivoPageState extends State<DispositivoPage> {
 
   Widget _buildMetricCard(String label, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -157,19 +157,33 @@ class _DispositivoPageState extends State<DispositivoPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.interTight(
-              fontSize: value.length > 15 ? 14 : 22, 
-              fontWeight: FontWeight.bold, 
-              color: const Color(0xFF14181B)
-            )
-          ),
+          Icon(icon, color: color, size: 24),
           const SizedBox(height: 4),
-          Text(label, style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[600]), textAlign: TextAlign.center),
+          Expanded(
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  style: GoogleFonts.interTight(
+                    fontSize: value.length > 15 ? 14 : 20, 
+                    fontWeight: FontWeight.bold, 
+                    color: const Color(0xFF14181B)
+                  )
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label, 
+            style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[600]), 
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
@@ -269,7 +283,14 @@ class _DispositivoPageState extends State<DispositivoPage> {
             ),
             title: Row(
               children: [
-                Text(device.modelo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Expanded(
+                  child: Text(
+                    device.modelo, 
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                ),
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -290,23 +311,33 @@ class _DispositivoPageState extends State<DispositivoPage> {
                 const SizedBox(height: 4),
                 Text('${device.marca} • Serial: ${device.serial}', style: TextStyle(color: Colors.grey[600])),
                 const SizedBox(height: 8),
-                Row(
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 4,
                   children: [
-                    const Icon(Icons.history_rounded, size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Uso: ${stats?.totalColetas ?? 0} coletas', 
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.history_rounded, size: 14, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Uso: ${stats?.totalColetas ?? 0} coletas', 
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)
+                        ),
+                      ],
                     ),
-                    if (stats?.ultimaAtividade != null) ...[
-                      const SizedBox(width: 12),
-                      const Icon(Icons.access_time_rounded, size: 14, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Última: ${DateFormat('dd/MM HH:mm').format(stats!.ultimaAtividade!)}', 
-                        style: const TextStyle(fontSize: 12)
+                    if (stats?.ultimaAtividade != null)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.access_time_rounded, size: 14, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Última: ${DateFormat('dd/MM HH:mm').format(stats!.ultimaAtividade!)}', 
+                            style: const TextStyle(fontSize: 12)
+                          ),
+                        ],
                       ),
-                    ],
                   ],
                 ),
               ],

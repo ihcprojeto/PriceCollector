@@ -82,7 +82,7 @@ class DispositivoProvider with ChangeNotifier {
       final mostUsed = _usageStats.entries.sortedBy<num>((e) => e.value.totalColetas).lastOrNull;
       if (mostUsed != null) {
         final disp = _allDispositivos.firstWhereOrNull((d) => d.id == mostUsed.key);
-        mostUsedDevice = disp?.displayName ?? '--';
+        mostUsedDevice = disp?.modelo ?? '--';
       }
 
       _applyFilters();
