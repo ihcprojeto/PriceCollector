@@ -33,15 +33,44 @@ class GerenciamentoProdutoProvider with ChangeNotifier {
     try {
       final data = await _repository.getTodosProdutos();
       
-      // Para cada produto, buscar em quantas lojas ele está presente
-      // Otimização: Em bases grandes, isso deveria ser feito via Cloud Function ou agregação
-      List<ProdutoModel> finalData = [];
-      for (var p in data) {
-        final totalLojas = await _repository.getContagemLojasDoProduto(p.barcode);
-        finalData.add(p.copyWith(totalLojas: totalLojas));
-      }
+      // 1. Carrega produtos imediatamente (estado inicial)
+      _produtos = data;
+      _applyFilters();
+      _isLoading = false;
+      notifyListeners();
+
+      // 2. Busca TODAS as demandas de uma vez para contar a presença
+      // Isso evita a necessidade de índices compostos e reduz milhares de leituras para poucas
+      Map<String, int> contagemPresenca = {};
       
-      _produtos = finalData;
+      try {
+        final snapshotDemandas = await FirebaseFirestore.instance.collectionGroup('demandas').get();
+        for (var doc in snapshotDemandas.docs) {
+          final barcode = doc.data()['barcode'] as String?;
+          if (barcode != null) {
+            contagemPresenca[barcode] = (contagemPresenca[barcode] ?? 0) + 1;
+          }
+        }
+      } catch (e) {
+        debugPrint('Erro ao buscar demandas via collectionGroup: $e');
+        // Fallback: Se o collectionGroup falhar, tentamos iterar pelas lojas (mais lento, mas garantido)
+        final lojas = await FirebaseFirestore.instance.collection('lojas').get();
+        for (var lojaDoc in lojas.docs) {
+          final demandas = await lojaDoc.reference.collection('demandas').get();
+          for (var d in demandas.docs) {
+            final barcode = d.data()['barcode'] as String?;
+            if (barcode != null) {
+              contagemPresenca[barcode] = (contagemPresenca[barcode] ?? 0) + 1;
+            }
+          }
+        }
+      }
+
+      // 3. Atualiza a lista com as contagens reais
+      _produtos = data.map((p) => p.copyWith(
+        totalLojas: contagemPresenca[p.barcode] ?? 0
+      )).toList();
+      
       _applyFilters();
     } catch (e) {
       _errorMessage = 'Erro ao carregar catálogo: $e';

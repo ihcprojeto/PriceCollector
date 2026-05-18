@@ -15,13 +15,17 @@ class ProdutoRepository {
   Future<void> excluirProdutoPermanente(String barcode) async {
     final batch = _firestore.batch();
 
-    // 1. Deleta da coleção global
+    // 1. Deleta da coleção global de produtos
     batch.delete(_firestore.collection('produtos').doc(barcode));
 
-    // 2. Deleta de todas as demandas (subcoleções)
-    final lojasSnapshot = await _firestore.collection('lojas').get();
-    for (var lojaDoc in lojasSnapshot.docs) {
-      batch.delete(lojaDoc.reference.collection('demandas').doc(barcode));
+    // 2. Busca e deleta de todas as subcoleções de demandas (independente do ID ou Status)
+    // Usamos collectionGroup para encontrar todas as instâncias desse barcode em qualquer loja
+    final demandasSnapshot = await _firestore.collectionGroup('demandas')
+        .where('barcode', isEqualTo: barcode)
+        .get();
+
+    for (var doc in demandasSnapshot.docs) {
+      batch.delete(doc.reference);
     }
 
     await batch.commit();

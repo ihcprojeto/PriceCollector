@@ -229,6 +229,20 @@ class _GerenciamentoProdutosPageState extends State<GerenciamentoProdutosPage> {
       body: SafeArea(
         child: Column(
           children: [
+            if (provider.errorMessage != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                color: Colors.red[50],
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.red),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(provider.errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 12))),
+                    IconButton(icon: const Icon(Icons.refresh, color: Colors.red), onPressed: provider.fetchProdutos),
+                  ],
+                ),
+              ),
             _buildActionBar(provider),
             _buildFilters(provider),
             if (provider.isLoading) const LinearProgressIndicator(),
@@ -359,30 +373,62 @@ class _GerenciamentoProdutosPageState extends State<GerenciamentoProdutosPage> {
       padding: const EdgeInsets.all(16),
       child: Container(
         width: double.infinity,
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-        child: DataTable(
-          showCheckboxColumn: true,
-          columns: const [
-            DataColumn(label: Text('Imagem')),
-            DataColumn(label: Text('Nome')),
-            DataColumn(label: Text('Marca')),
-            DataColumn(label: Text('Barcode')),
-            DataColumn(label: Text('Lojas')),
-          ],
-          rows: provider.produtos.map((prod) {
-            final isSelected = provider.selectedBarcodes.contains(prod.barcode);
-            return DataRow(
-              selected: isSelected,
-              onSelectChanged: (_) => provider.toggleSelection(prod.barcode),
-              cells: [
-                DataCell(Image.network(prod.imagemUrl, width: 40, height: 40, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.inventory))),
-                DataCell(Text(prod.nome, style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(Text(prod.marca)),
-                DataCell(Text(prod.barcode)),
-                DataCell(_buildLojasBadge(prod.totalLojas)),
-              ],
-            );
-          }).toList(),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [BoxShadow(color: Colors.black.withAlpha((0.05 * 255).toInt()), blurRadius: 10)],
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            dividerColor: Colors.grey[200],
+          ),
+          child: DataTable(
+            showCheckboxColumn: true,
+            headingRowColor: WidgetStateProperty.all(AppTheme.primary.withAlpha((0.05 * 255).toInt())),
+            headingTextStyle: GoogleFonts.inter(
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primary,
+              fontSize: 14,
+            ),
+            columnSpacing: 24,
+            columns: const [
+              DataColumn(label: Text('PRODUTO')),
+              DataColumn(label: Text('MARCA')),
+              DataColumn(label: Text('BARCODE')),
+              DataColumn(label: Text('PRESENÇA')),
+            ],
+            rows: provider.produtos.map((prod) {
+              final isSelected = provider.selectedBarcodes.contains(prod.barcode);
+              return DataRow(
+                selected: isSelected,
+                onSelectChanged: (_) => provider.toggleSelection(prod.barcode),
+                cells: [
+                  DataCell(
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.network(
+                            prod.imagemUrl,
+                            width: 35,
+                            height: 35,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(Icons.inventory, size: 20),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(prod.nome, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ),
+                  DataCell(Text(prod.marca)),
+                  DataCell(Text(prod.barcode, style: GoogleFonts.robotoMono(fontSize: 13, color: Colors.grey[600]))),
+                  DataCell(_buildLojasBadge(prod.totalLojas)),
+                ],
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
