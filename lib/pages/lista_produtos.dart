@@ -43,46 +43,6 @@ class _ListaProdutosPageState extends State<ListaProdutosPage> {
     super.dispose();
   }
 
-  void _onImportExcel() async {
-    final lojaId = widget.loja.id;
-    if (lojaId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erro: ID da loja não encontrado.'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
-    final provider = context.read<ProdutoProvider>();
-    final success = await provider.importarExcel(lojaId);
-    
-    if (!mounted) return;
-
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Produtos importados com sucesso!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } else if (provider.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(provider.errorMessage!),
-          backgroundColor: Colors.red,
-        ),
-      );
-      provider.clearError();
-    } else {
-      // Caso o usuário tenha cancelado a seleção do arquivo
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Importação cancelada.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-    }
-  }
-
   Future<void> _confirmCancel(DemandaModel demanda) async {
     final bool? confirm = await showDialog<bool>(
       context: context,
@@ -150,14 +110,7 @@ class _ListaProdutosPageState extends State<ListaProdutosPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        actions: [
-          if (isAdmin)
-            IconButton(
-              icon: const Icon(Icons.upload_file_rounded, color: Colors.white),
-              onPressed: produtoProvider.isLoading ? null : _onImportExcel,
-              tooltip: 'Importar Excel (XLSX)',
-            ),
-        ],
+
         centerTitle: true,
         elevation: 0,
       ),

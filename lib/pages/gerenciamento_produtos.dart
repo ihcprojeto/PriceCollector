@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../models/produto_model.dart';
-import '../models/loja_model.dart';
 import '../providers/gerenciamento_produto_provider.dart';
 import '../providers/loja_provider.dart';
 import '../theme/app_theme.dart';
@@ -216,7 +214,10 @@ class _GerenciamentoProdutosPageState extends State<GerenciamentoProdutosPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
         ),
-        title: Text('Gerenciamento de Produtos', style: GoogleFonts.interTight(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text('Gerenciamento de Produtos', style: GoogleFonts.interTight(color: Colors.white, fontWeight: FontWeight.bold))
+        ),
         centerTitle: true,
         actions: [
           IconButton(
@@ -265,26 +266,29 @@ class _GerenciamentoProdutosPageState extends State<GerenciamentoProdutosPage> {
     if (provider.selectedBarcodes.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      color: AppTheme.primary.withOpacity(0.1),
+      color: AppTheme.primary.withAlpha((0.1 * 255).toInt()),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Text('${provider.selectedBarcodes.length} selecionados', style: const TextStyle(fontWeight: FontWeight.bold)),
-          const Spacer(),
-          TextButton.icon(
-            icon: const Icon(Icons.add_business, size: 18),
-            label: const Text('Add em Demandas'),
-            onPressed: _onAddDemandas,
-          ),
-          const SizedBox(width: 8),
-          TextButton.icon(
-            icon: const Icon(Icons.delete_forever, color: Colors.red, size: 18),
-            label: const Text('Excluir', style: TextStyle(color: Colors.red)),
-            onPressed: _onExcluir,
-          ),
-          const SizedBox(width: 8),
-          IconButton(icon: const Icon(Icons.close), onPressed: provider.clearSelection),
-        ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            Text('${provider.selectedBarcodes.length} selecionados', style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(width: 16),
+            TextButton.icon(
+              icon: const Icon(Icons.add_business, size: 18),
+              label: const Text('Add em Demandas'),
+              onPressed: _onAddDemandas,
+            ),
+            const SizedBox(width: 8),
+            TextButton.icon(
+              icon: const Icon(Icons.delete_forever, color: Colors.red, size: 18),
+              label: const Text('Excluir', style: TextStyle(color: Colors.red)),
+              onPressed: _onExcluir,
+            ),
+            const SizedBox(width: 8),
+            IconButton(icon: const Icon(Icons.close), onPressed: provider.clearSelection),
+          ],
+        ),
       ),
     );
   }
@@ -294,20 +298,29 @@ class _GerenciamentoProdutosPageState extends State<GerenciamentoProdutosPage> {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
+          Tooltip(
+            message: 'Selecionar todos',
+            child: Checkbox(
+              value: provider.isAllSelected,
+              onChanged: (_) => provider.toggleSelectAll(),
+            ),
+          ),
+          const SizedBox(width: 8),
           Expanded(
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Buscar por nome, marca, descrição ou barcode...',
+                hintText: 'Buscar produtos...',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 filled: true,
                 fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
               ),
               onChanged: provider.setSearchQuery,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           _buildSortDropdown(provider),
         ],
       ),
@@ -384,6 +397,7 @@ class _GerenciamentoProdutosPageState extends State<GerenciamentoProdutosPage> {
           ),
           child: DataTable(
             showCheckboxColumn: true,
+            onSelectAll: (_) => provider.toggleSelectAll(),
             headingRowColor: WidgetStateProperty.all(AppTheme.primary.withAlpha((0.05 * 255).toInt())),
             headingTextStyle: GoogleFonts.inter(
               fontWeight: FontWeight.bold,
@@ -437,7 +451,7 @@ class _GerenciamentoProdutosPageState extends State<GerenciamentoProdutosPage> {
   Widget _buildLojasBadge(int count) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: count > 0 ? Colors.blue.withOpacity(0.1) : Colors.grey.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: count > 0 ? Colors.blue.withAlpha((0.1 * 255).toInt()) : Colors.grey.withAlpha((0.1 * 255).toInt()), borderRadius: BorderRadius.circular(12)),
       child: Text(
         '$count lojas',
         style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: count > 0 ? Colors.blue : Colors.grey),

@@ -651,7 +651,7 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
         title: Text(title), content: Text(content),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.pop(context, true), style: TextButton.styleFrom(foregroundColor: Colors.green), child: const Text('Confirmar')),
+          TextButton(onPressed: () => Navigator.pop(context, true), style: TextButton.styleFrom(foregroundColor: Colors.red), child: const Text('Confirmar')),
         ],
       ),
     );

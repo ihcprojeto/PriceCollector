@@ -116,6 +116,18 @@ class GerenciamentoProdutoProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleSelectAll() {
+    if (_selectedBarcodes.length >= _filteredProdutos.length && _filteredProdutos.isNotEmpty) {
+      _selectedBarcodes.clear();
+    } else {
+      _selectedBarcodes.addAll(_filteredProdutos.map((p) => p.barcode));
+    }
+    notifyListeners();
+  }
+
+  bool get isAllSelected => 
+      _filteredProdutos.isNotEmpty && _selectedBarcodes.length >= _filteredProdutos.length;
+
   void clearSelection() {
     _selectedBarcodes.clear();
     notifyListeners();
