@@ -210,7 +210,7 @@ class _DashboardPageState extends State<DashboardPage> {
         'color': const Color(0xFFEE8B60),
         'route': 'produtividade',
       },
-      if (usuario?.funcao == 'administrador')
+      if (usuario?.funcao == 'administrador') ...[
         {
           'title': 'Dispositivos',
           'subtitle': 'Gerenciar aparelhos',
@@ -218,6 +218,14 @@ class _DashboardPageState extends State<DashboardPage> {
           'color': const Color(0xFF57636C),
           'route': 'dispositivos',
         },
+        {
+          'title': 'Produtos',
+          'subtitle': 'Catálogo global',
+          'icon': Icons.inventory_rounded,
+          'color': const Color(0xFFEE6081),
+          'route': 'gerenciamento_produtos',
+        },
+      ],
       {
         'title': 'Operações',
         'subtitle': 'Configurações e logs',

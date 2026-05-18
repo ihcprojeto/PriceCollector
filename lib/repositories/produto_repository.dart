@@ -1,8 +1,40 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/demanda_model.dart';
+import '../models/produto_model.dart';
 
 class ProdutoRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // --- MÉTODOS DE PRODUTOS (CATÁLOGO GLOBAL) ---
+
+  Future<List<ProdutoModel>> getTodosProdutos() async {
+    final snapshot = await _firestore.collection('produtos').get();
+    return snapshot.docs.map((doc) => ProdutoModel.fromFirestore(doc.data())).toList();
+  }
+
+  Future<void> excluirProdutoPermanente(String barcode) async {
+    final batch = _firestore.batch();
+
+    // 1. Deleta da coleção global
+    batch.delete(_firestore.collection('produtos').doc(barcode));
+
+    // 2. Deleta de todas as demandas (subcoleções)
+    final lojasSnapshot = await _firestore.collection('lojas').get();
+    for (var lojaDoc in lojasSnapshot.docs) {
+      batch.delete(lojaDoc.reference.collection('demandas').doc(barcode));
+    }
+
+    await batch.commit();
+  }
+
+  Future<int> getContagemLojasDoProduto(String barcode) async {
+    final snapshot = await _firestore.collectionGroup('demandas')
+        .where('barcode', isEqualTo: barcode)
+        .get();
+    return snapshot.size;
+  }
+
+  // --- MÉTODOS DE DEMANDAS ---
 
   Stream<List<DemandaModel>> getDemandas(String lojaId) {
     return _firestore

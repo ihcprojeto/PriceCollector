@@ -23,6 +23,7 @@ import 'providers/coleta_provider.dart';
 import 'providers/perfil_provider.dart';
 import 'providers/produtividade_provider.dart';
 import 'providers/dispositivo_provider.dart';
+import 'providers/gerenciamento_produto_provider.dart';
 
 // Import de todas as páginas convertidas
 import 'pages/login.dart';
@@ -38,6 +39,7 @@ import 'pages/operacao.dart';
 import 'pages/dispositivo.dart';
 import 'pages/perfil.dart';
 import 'pages/produtividade.dart';
+import 'pages/gerenciamento_produtos.dart';
 import 'pages/splash.dart';
 
 void main() async {
@@ -77,6 +79,9 @@ void main() async {
         ),
         ChangeNotifierProvider<DispositivoProvider>(
           create: (_) => DispositivoProvider(),
+        ),
+        ChangeNotifierProvider<GerenciamentoProdutoProvider>(
+          create: (_) => GerenciamentoProdutoProvider(),
         ),
       ],
       child: const MyApp(),
@@ -167,6 +172,11 @@ class MyApp extends StatelessWidget {
         name: 'produtividade',
         path: '/produtividade',
         builder: (context, state) => const ProdutividadePage(),
+      ),
+      GoRoute(
+        name: 'gerenciamento_produtos',
+        path: '/gerenciamento_produtos',
+        builder: (context, state) => const GerenciamentoProdutosPage(),
       ),
     ],
   );
