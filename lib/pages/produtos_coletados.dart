@@ -25,7 +25,7 @@ class ProdutosColetadosPage extends StatefulWidget {
 class _ProdutosColetadosPageState extends State<ProdutosColetadosPage> {
   final TextEditingController _searchController = TextEditingController();
   String? _lojaIdFiltro;
-  String _orderBy = 'Nome A-Z';
+  String _orderBy = 'Nome (A-Z)';
 
   @override
   void initState() {

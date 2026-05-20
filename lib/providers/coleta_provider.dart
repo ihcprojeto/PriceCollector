@@ -16,7 +16,7 @@ class ColetaProvider with ChangeNotifier {
   String? _lojaIdFiltro;
   String? _usuarioIdFiltro;
   String _searchQuery = '';
-  String _orderBy = 'Nome A-Z';
+  String _orderBy = 'Nome (A-Z)';
   
   int _totalDemandas = 0;
 
@@ -96,22 +96,22 @@ class ColetaProvider with ChangeNotifier {
     }).toList();
 
     switch (_orderBy) {
-      case 'Preço: Menor ao Maior':
+      case 'Menor preço':
         _filteredColetas.sort((a, b) => a.preco.compareTo(b.preco));
         break;
-      case 'Preço: Maior ao Menor':
+      case 'Maior preço':
         _filteredColetas.sort((a, b) => b.preco.compareTo(a.preco));
         break;
-      case 'Nome A-Z':
+      case 'Nome (A-Z)':
         _filteredColetas.sort((a, b) => a.produtoNome.compareTo(b.produtoNome));
         break;
-      case 'Nome Z-A':
+      case 'Nome (Z-A)':
         _filteredColetas.sort((a, b) => b.produtoNome.compareTo(a.produtoNome));
         break;
-      case 'Marca A-Z':
+      case 'Marca (A-Z)':
         _filteredColetas.sort((a, b) => a.marcaProduto.compareTo(b.marcaProduto));
         break;
-      case 'Marca Z-A':
+      case 'Marca (Z-A)':
         _filteredColetas.sort((a, b) => b.marcaProduto.compareTo(a.marcaProduto));
         break;
     }
