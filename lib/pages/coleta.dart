@@ -107,6 +107,7 @@ class _ColetaPageState extends State<ColetaPage> {
         preco: preco,
         produtoBarcode: widget.demanda.barcode,
         produtoNome: widget.demanda.produtoNome,
+        marcaProduto: widget.demanda.produtoMarca,
         produtoImagemUrl: widget.demanda.produtoImagemUrl,
         usuarioId: usuario.id!,
         usuarioMatricula: usuario.matricula,

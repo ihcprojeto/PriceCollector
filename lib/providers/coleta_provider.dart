@@ -90,6 +90,7 @@ class ColetaProvider with ChangeNotifier {
   void _applyFiltersAndSort() {
     _filteredColetas = _coletas.where((c) {
       final matchesSearch = c.produtoNome.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          c.marcaProduto.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           c.produtoBarcode.contains(_searchQuery);
       return matchesSearch;
     }).toList();
@@ -106,6 +107,12 @@ class ColetaProvider with ChangeNotifier {
         break;
       case 'Nome Z-A':
         _filteredColetas.sort((a, b) => b.produtoNome.compareTo(a.produtoNome));
+        break;
+      case 'Marca A-Z':
+        _filteredColetas.sort((a, b) => a.marcaProduto.compareTo(b.marcaProduto));
+        break;
+      case 'Marca Z-A':
+        _filteredColetas.sort((a, b) => b.marcaProduto.compareTo(a.marcaProduto));
         break;
     }
     notifyListeners();

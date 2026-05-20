@@ -214,7 +214,14 @@ class _ProdutosColetadosPageState extends State<ProdutosColetadosPage> {
                 child: _buildDropdown(
                   value: _orderBy,
                   hint: 'Ordenar por',
-                  items: ['Nome A-Z', 'Nome Z-A', 'Preço: Menor ao Maior', 'Preço: Maior ao Menor']
+                  items: [
+                    'Nome (A-Z)',
+                    'Nome (Z-A)',
+                    'Marca (A-Z)',
+                    'Marca (Z-A)',
+                    'Menor preço',
+                    'Maior preço'
+                  ]
                       .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                       .toList(),
                   onChanged: (val) {
@@ -343,6 +350,11 @@ class _ProdutosColetadosPageState extends State<ProdutosColetadosPage> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.interTight(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    coleta.marcaProduto,
+                    style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[600], fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 4),
                   Row(

@@ -10,6 +10,7 @@ class ColetaModel {
   final double preco;
   final String produtoBarcode;
   final String produtoNome;
+  final String marcaProduto;
   final String? produtoImagemUrl;
   final String usuarioId;
   final String usuarioMatricula;
@@ -25,6 +26,7 @@ class ColetaModel {
     required this.preco,
     required this.produtoBarcode,
     required this.produtoNome,
+    required this.marcaProduto,
     this.produtoImagemUrl,
     required this.usuarioId,
     required this.usuarioMatricula,
@@ -41,6 +43,7 @@ class ColetaModel {
       'preco': preco,
       'produtoBarcode': produtoBarcode,
       'produtoNome': produtoNome,
+      'marcaProduto': marcaProduto,
       'produtoImagemUrl': produtoImagemUrl,
       'usuarioId': usuarioId,
       'usuarioMatricula': usuarioMatricula,
@@ -65,6 +68,7 @@ class ColetaModel {
       preco: (json['preco'] ?? 0.0).toDouble(),
       produtoBarcode: json['produtoBarcode'] ?? '',
       produtoNome: json['produtoNome'] ?? '',
+      marcaProduto: json['marcaProduto'] ?? '',
       produtoImagemUrl: json['produtoImagemUrl'],
       usuarioId: json['usuarioId'] ?? '',
       usuarioMatricula: json['usuarioMatricula'] ?? '',
