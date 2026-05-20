@@ -18,24 +18,29 @@ class ProdutoRepository {
     // 1. Deleta da coleção global de produtos
     batch.delete(_firestore.collection('produtos').doc(barcode));
 
-    // 2. Busca e deleta de todas as subcoleções de demandas (independente do ID ou Status)
-    // Usamos collectionGroup para encontrar todas as instâncias desse barcode em qualquer loja
-    final demandasSnapshot = await _firestore.collectionGroup('demandas')
-        .where('barcode', isEqualTo: barcode)
-        .get();
-
-    for (var doc in demandasSnapshot.docs) {
-      batch.delete(doc.reference);
+    // 2. Deleta de todas as subcoleções de demandas
+    // Como usamos o barcode como ID do documento em todas as lojas, 
+    // podemos iterar as lojas e deletar diretamente sem precisar de collectionGroup com filtro (que exige índice)
+    final lojasSnapshot = await _firestore.collection('lojas').get();
+    for (var lojaDoc in lojasSnapshot.docs) {
+      batch.delete(lojaDoc.reference.collection('demandas').doc(barcode));
     }
 
     await batch.commit();
   }
 
   Future<int> getContagemLojasDoProduto(String barcode) async {
-    final snapshot = await _firestore.collectionGroup('demandas')
-        .where('barcode', isEqualTo: barcode)
-        .get();
-    return snapshot.size;
+    // Para evitar a necessidade de índice composto no collectionGroup, 
+    // podemos verificar em cada loja se o documento com o ID do barcode existe.
+    final lojasSnapshot = await _firestore.collection('lojas').get();
+    int count = 0;
+    
+    for (var lojaDoc in lojasSnapshot.docs) {
+      final doc = await lojaDoc.reference.collection('demandas').doc(barcode).get();
+      if (doc.exists) count++;
+    }
+    
+    return count;
   }
 
   // --- MÉTODOS DE DEMANDAS ---
@@ -150,11 +155,17 @@ class ProdutoRepository {
           .get();
       return snapshot.size;
     } else {
-      final snapshot = await _firestore
-          .collectionGroup('demandas')
-          .where('status', isNotEqualTo: 'cancelado')
-          .get();
-      return snapshot.size;
+      try {
+        final snapshot = await _firestore
+            .collectionGroup('demandas')
+            .where('status', isNotEqualTo: 'cancelado')
+            .get();
+        return snapshot.size;
+      } catch (e) {
+        // Fallback para evitar erro de falta de índice no dashboard
+        final snapshot = await _firestore.collectionGroup('demandas').get();
+        return snapshot.docs.where((doc) => doc.data()['status'] != 'cancelado').length;
+      }
     }
   }
 }
