@@ -348,7 +348,8 @@ class _DispositivoPageState extends State<DispositivoPage> {
                   final confirm = await _showConfirmDialog(
                     context, 
                     device.ativo ? 'Desativar Dispositivo?' : 'Ativar Dispositivo?',
-                    'O dispositivo ${device.ativo ? 'não aparecerá' : 'voltará a aparecer'} na seleção de login.'
+                    'O dispositivo ${device.ativo ? 'não aparecerá' : 'voltará a aparecer'} na seleção de login.',
+                    confirmColor: device.ativo ? Colors.red : Colors.green,
                   );
                   if (confirm) provider.toggleStatus(device.id, !device.ativo);
                 } else if (val == 'details') {
@@ -369,7 +370,7 @@ class _DispositivoPageState extends State<DispositivoPage> {
     );
   }
 
-  Future<bool> _showConfirmDialog(BuildContext context, String title, String content) async {
+  Future<bool> _showConfirmDialog(BuildContext context, String title, String content, {Color confirmColor = Colors.red}) async {
     return await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -379,7 +380,7 @@ class _DispositivoPageState extends State<DispositivoPage> {
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
           TextButton(
             onPressed: () => Navigator.pop(context, true), 
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: confirmColor),
             child: const Text('Confirmar')
           ),
         ],

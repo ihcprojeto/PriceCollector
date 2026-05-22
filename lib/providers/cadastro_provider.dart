@@ -33,10 +33,13 @@ class CadastroProvider extends ChangeNotifier {
     _setError(null);
 
     try {
+      final String matriculaTrim = matricula.trim();
+      final String funcao = (matriculaTrim.toLowerCase().contains('adm')) ? 'administrador' : 'coletador';
+
       final usuario = UsuarioModel(
         email: email.trim(),
-        funcao: 'coletador',
-        matricula: matricula.trim(),
+        funcao: funcao,
+        matricula: matriculaTrim,
         nome: nome.trim(),
         senha: senha,
       );

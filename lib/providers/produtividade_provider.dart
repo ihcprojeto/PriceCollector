@@ -116,20 +116,20 @@ class ProdutividadeProvider with ChangeNotifier {
         debugPrint('Erro ao buscar bases (lojas/users): $e');
       }
 
-      // 2. Buscar todas as coletas
+      // 2. Buscar todas as coletas (Ignoramos o filtro de usuário aqui para o Ranking e Pendentes)
       try {
         _coletas = await _coletaRepo.getColetasList(
           lojaId: _lojaIdFiltro,
-          usuarioId: _usuarioIdFiltro,
+          // usuarioId: _usuarioIdFiltro, -> Removido para não limitar os dados do ranking
         );
       } catch (e) {
         debugPrint('Erro ao buscar coletas: $e');
         _coletas = [];
       }
 
-      var coletasFiltradas = _coletas;
+      var coletasNoPeriodo = _coletas;
       if (_periodo != null) {
-        coletasFiltradas = coletasFiltradas.where((c) {
+        coletasNoPeriodo = coletasNoPeriodo.where((c) {
           try {
             return c.dataColeta.isAfter(_periodo!.start) && 
                    c.dataColeta.isBefore(_periodo!.end.add(const Duration(days: 1)));
@@ -177,8 +177,8 @@ class ProdutividadeProvider with ChangeNotifier {
         debugPrint('Erro ao buscar demandas: $e');
       }
 
-      // 4. Calcular Métricas (Garante que sempre executa para atualizar a UI mesmo com dados parciais)
-      _calcularMetricas(coletasFiltradas, todasDemandasComLoja);
+      // 4. Calcular Métricas
+      _calcularMetricas(coletasNoPeriodo, todasDemandasComLoja);
 
     } catch (e) {
       debugPrint('Erro geral no carregarDados: $e');
@@ -188,8 +188,13 @@ class ProdutividadeProvider with ChangeNotifier {
     }
   }
 
-  void _calcularMetricas(List<ColetaModel> coletas, List<DemandaWithStore> demandasComLoja) {
-    totalColetados = coletas.length;
+  void _calcularMetricas(List<ColetaModel> coletasTime, List<DemandaWithStore> demandasComLoja) {
+    // Coletas do usuário específico para os cards de resumo
+    final coletasUsuario = _usuarioIdFiltro != null 
+        ? coletasTime.where((c) => c.usuarioId == _usuarioIdFiltro).toList()
+        : coletasTime;
+
+    totalColetados = coletasUsuario.length;
     
     // Filtragem de demandas de acordo com os filtros globais (lojaId)
     var demandasBase = demandasComLoja;
@@ -199,52 +204,44 @@ class ProdutividadeProvider with ChangeNotifier {
 
     totalCancelados = demandasBase.where((d) => d.demanda.status == 'cancelado').length;
     final totalAtivos = demandasBase.length - totalCancelados;
-    totalPendentes = totalAtivos - totalColetados;
     
-    percentualConclusao = totalAtivos > 0 ? (totalColetados / totalAtivos).clamp(0, 1) : 0;
+    // Pendentes e Conclusão são calculados com base no progresso do TIME
+    totalPendentes = totalAtivos - coletasTime.length;
+    percentualConclusao = totalAtivos > 0 ? (coletasTime.length / totalAtivos).clamp(0, 1) : 0;
 
-    // Cálculo de Velocidade e Tempo Médio Global
-    if (coletas.isNotEmpty) {
-      // Agrupar por usuário para calcular o tempo ativo individual e depois somar
-      final coletasPorUsuario = groupBy(coletas, (ColetaModel c) => c.usuarioId);
+    // Cálculo de Velocidade e Tempo Médio (Respeita o filtro de usuário nos cards superiores)
+    if (coletasUsuario.isNotEmpty) {
+      final coletasPorUsuario = groupBy(coletasUsuario, (ColetaModel c) => c.usuarioId);
       
-      int totalSegundosAtivosEquipe = 0;
+      int totalSegundosAtivosSessao = 0;
 
       coletasPorUsuario.forEach((usuarioId, userColetas) {
         final sortedUserColetas = userColetas.sortedBy((c) => c.dataColeta);
-        
-        // Início da primeira sessão: 2 minutos (120s)
         int userSegundosAtivos = 120; 
 
         for (int i = 0; i < sortedUserColetas.length - 1; i++) {
           final diff = sortedUserColetas[i + 1].dataColeta.difference(sortedUserColetas[i].dataColeta).inSeconds;
-          
           if (diff < 3600) {
-            // Intervalo válido (< 60 min)
             userSegundosAtivos += diff;
           } else {
-            // Nova sessão (> 60 min): adiciona 2 minutos fixos
             userSegundosAtivos += 120;
           }
         }
-        totalSegundosAtivosEquipe += userSegundosAtivos;
+        totalSegundosAtivosSessao += userSegundosAtivos;
       });
 
-      final double horasAtivasTotal = totalSegundosAtivosEquipe / 3600.0;
-
-      // Velocidade Média Global = totalItens / tempoAtivoTotalHoras
-      velocidadeMediaGlobal = horasAtivasTotal > 0 ? totalColetados / horasAtivasTotal : 0;
-      
-      // Tempo Médio Global = tempoAtivoTotal / totalItens
-      tempoMedioGlobal = Duration(seconds: (totalSegundosAtivosEquipe / totalColetados).round());
+      final double horasAtivasTotal = totalSegundosAtivosSessao / 3600.0;
+      velocidadeMediaGlobal = horasAtivasTotal > 0 ? coletasUsuario.length / horasAtivasTotal : 0;
+      tempoMedioGlobal = Duration(seconds: (totalSegundosAtivosSessao / coletasUsuario.length).round());
       
     } else {
       velocidadeMediaGlobal = 0;
       tempoMedioGlobal = Duration.zero;
     }
 
-    // Evolução Temporal (Agrupado por dia e ordenado)
-    final grouped = groupBy(coletas, (ColetaModel c) {
+    // Evolução Temporal (Agrupado por dia - Mantemos do TIME ou filtramos pelo USUÁRIO)
+    // Para manter consistência com o resumo, vamos filtrar a evolução pelo usuário também
+    final grouped = groupBy(coletasUsuario, (ColetaModel c) {
       return DateTime(c.dataColeta.year, c.dataColeta.month, c.dataColeta.day);
     });
     
@@ -253,11 +250,27 @@ class ProdutividadeProvider with ChangeNotifier {
       (a, b) => a.compareTo(b),
     );
 
-    // Ranking Equipe
-    final porUsuario = groupBy(coletas, (ColetaModel c) => c.usuarioId);
+    // Ranking Equipe (SEMPRE usa coletasTime, ignorando o filtro de usuário)
+    final porUsuarioRanking = groupBy(coletasTime, (ColetaModel c) => c.usuarioId);
     
+    // Calculamos a média de velocidade do TIME para comparação no ranking
+    double mediaVelocidadeTime = 0;
+    if (coletasTime.isNotEmpty) {
+      int segAtivosTime = 0;
+      final porUser = groupBy(coletasTime, (ColetaModel c) => c.usuarioId);
+      porUser.forEach((_, list) {
+         final sorted = list.sortedBy((c) => c.dataColeta);
+         segAtivosTime += 120;
+         for(int i=0; i<sorted.length-1; i++) {
+           final d = sorted[i+1].dataColeta.difference(sorted[i].dataColeta).inSeconds;
+           segAtivosTime += (d < 3600) ? d : 120;
+         }
+      });
+      mediaVelocidadeTime = (segAtivosTime > 0) ? coletasTime.length / (segAtivosTime / 3600.0) : 0;
+    }
+
     rankingEquipe = _usuarios.map((u) {
-      final userColetas = porUsuario[u.id] ?? [];
+      final userColetas = porUsuarioRanking[u.id] ?? [];
       
       if (userColetas.isEmpty) {
         return UserPerformance(
@@ -274,14 +287,14 @@ class ProdutividadeProvider with ChangeNotifier {
       final sortedUserColetas = userColetas.sortedBy((c) => c.dataColeta);
       final userFim = sortedUserColetas.last.dataColeta;
       
-      int userSegundosAtivos = 120; // Início primeira sessão
+      int userSegundosAtivos = 120; 
 
       for (int i = 0; i < sortedUserColetas.length - 1; i++) {
         final d = sortedUserColetas[i + 1].dataColeta.difference(sortedUserColetas[i].dataColeta).inSeconds;
         if (d < 3600) {
           userSegundosAtivos += d;
         } else {
-          userSegundosAtivos += 120; // Início nova sessão
+          userSegundosAtivos += 120;
         }
       }
       
@@ -299,9 +312,9 @@ class ProdutividadeProvider with ChangeNotifier {
       );
     }).toList()..sort((a, b) => b.itensColetados.compareTo(a.itensColetados));
 
-    // Progresso por Loja
+    // Progresso por Loja (Baseado no TIME)
     progressoPorLoja = _lojas.map((loja) {
-      final coletadosLoja = coletas.where((c) => c.lojaId == loja.id).length;
+      final coletadosLoja = coletasTime.where((c) => c.lojaId == loja.id).length;
       final totalLoja = demandasComLoja.where((d) => d.lojaId == loja.id && d.demanda.status != 'cancelado').length;
       
       return StoreProgress(

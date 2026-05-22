@@ -11,6 +11,20 @@ class LojaRepository {
   Future<void> updateLoja(LojaModel loja) async {
     if (loja.id != null) {
       await _firestore.collection('lojas').doc(loja.id).update(loja.toMap());
+
+      // Atualizar informações correspondentes na coleção coletas
+      final coletasQuery = await _firestore
+          .collection('coletas')
+          .where('lojaId', isEqualTo: loja.id)
+          .get();
+
+      if (coletasQuery.docs.isNotEmpty) {
+        final batch = _firestore.batch();
+        for (var doc in coletasQuery.docs) {
+          batch.update(doc.reference, {'lojaNome': loja.nome});
+        }
+        await batch.commit();
+      }
     }
   }
 

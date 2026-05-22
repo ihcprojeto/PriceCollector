@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:collection/collection.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -27,6 +28,35 @@ class ProdutividadeExportService {
                     style: pw.TextStyle(font: fontBold, fontSize: 18, color: PdfColors.deepPurple)),
                   pw.Text(DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()),
                     style: pw.TextStyle(font: font, fontSize: 10)),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 10),
+
+            // Filtros Aplicados
+            pw.Container(
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                color: PdfColors.grey100,
+                borderRadius: pw.BorderRadius.circular(8),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Row(
+                    children: [
+                      pw.Text('Filtros: ', style: pw.TextStyle(font: fontBold, fontSize: 10)),
+                      pw.Text(
+                        'Período: ${data.periodo == null ? 'Todo o histórico' : '${DateFormat('dd/MM/yyyy').format(data.periodo!.start)} - ${DateFormat('dd/MM/yyyy').format(data.periodo!.end)}'}',
+                        style: pw.TextStyle(font: font, fontSize: 10),
+                      ),
+                      pw.SizedBox(width: 20),
+                      pw.Text(
+                        'Loja: ${data.lojaIdFiltro == null ? 'Todas as Lojas' : (data.progressoPorLoja.firstWhereOrNull((s) => s.id == data.lojaIdFiltro)?.nome ?? 'Não identificada')}',
+                        style: pw.TextStyle(font: font, fontSize: 10),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

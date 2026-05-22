@@ -169,14 +169,13 @@ class _ScannerPageState extends State<ScannerPage> {
           elevation: 0,
         ),
         body: SafeArea(
-          child: ResponsiveBody(
-            maxWidth: 600,
-            child: Column(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
+          child: SingleChildScrollView(
+            child: ResponsiveBody(
+              maxWidth: 600,
+              child: Column(
+                children: [
+                  AspectRatio(
+                    aspectRatio: 1.2,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(24),
                       child: Stack(
@@ -188,10 +187,10 @@ class _ScannerPageState extends State<ScannerPage> {
                           ),
                           // Overlay visual para área de leitura
                           Container(
-                            width: 250,
-                            height: 250,
+                            width: 200,
+                            height: 200,
                             decoration: BoxDecoration(
-                              border: Border.all(color: AppTheme.primary, width: 4),
+                              border: Border.all(color: AppTheme.primary.withAlpha(150), width: 4),
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
@@ -204,42 +203,33 @@ class _ScannerPageState extends State<ScannerPage> {
                       ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CustomTextField(
-                          label: 'Código de Barras',
-                          hint: 'Digitar manualmente...',
-                          icon: Icons.keyboard_rounded,
-                          controller: _barcodeController,
-                          keyboardType: TextInputType.number,
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton.icon(
-                            onPressed: isLoading ? null : () => _validateBarcode(_barcodeController.text.trim()),
-                            icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white),
-                            label: Text(
-                              'Ler e Prosseguir',
-                              style: GoogleFonts.interTight(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primary,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                        ),
-                      ],
+                  const SizedBox(height: 32),
+                  CustomTextField(
+                    label: 'Código de Barras',
+                    hint: 'Digitar manualmente...',
+                    icon: Icons.keyboard_rounded,
+                    controller: _barcodeController,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: isLoading ? null : () => _validateBarcode(_barcodeController.text.trim()),
+                      icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                      label: Text(
+                        'Ler e Prosseguir',
+                        style: GoogleFonts.interTight(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

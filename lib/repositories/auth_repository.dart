@@ -107,6 +107,26 @@ class AuthRepository {
 
   Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
     await _firestore.collection('usuarios').doc(uid).update(data);
+
+    // Sincronizar com a coleção coletas
+    final Map<String, dynamic> coletasUpdate = {};
+    if (data.containsKey('nome')) coletasUpdate['usuarioNome'] = data['nome'];
+    if (data.containsKey('matricula')) coletasUpdate['usuarioMatricula'] = data['matricula'];
+
+    if (coletasUpdate.isNotEmpty) {
+      final coletasQuery = await _firestore
+          .collection('coletas')
+          .where('usuarioId', isEqualTo: uid)
+          .get();
+
+      if (coletasQuery.docs.isNotEmpty) {
+        final batch = _firestore.batch();
+        for (var doc in coletasQuery.docs) {
+          batch.update(doc.reference, coletasUpdate);
+        }
+        await batch.commit();
+      }
+    }
   }
 
   Future<bool> reauthenticateAndChangeSensitiveData(
