@@ -86,6 +86,7 @@ class ProdutividadeProvider with ChangeNotifier {
 
   List<UserPerformance> rankingEquipe = [];
   List<StoreProgress> progressoPorLoja = [];
+  List<StoreProgress> distribuicaoPorLoja = [];
   Map<DateTime, int> evolucaoTemporal = {};
 
   void setPeriodo(DateTimeRange? range) {
@@ -249,6 +250,17 @@ class ProdutividadeProvider with ChangeNotifier {
       grouped.map((key, value) => MapEntry(key, value.length)),
       (a, b) => a.compareTo(b),
     );
+
+    // Distribuição por Loja (Respeita o filtro de usuário para o gráfico de pizza)
+    distribuicaoPorLoja = _lojas.map((loja) {
+      final coletadosLoja = coletasUsuario.where((c) => c.lojaId == loja.id).length;
+      return StoreProgress(
+        id: loja.id!,
+        nome: loja.nome,
+        coletados: coletadosLoja,
+        total: totalColetados,
+      );
+    }).where((s) => s.coletados > 0).toList();
 
     // Ranking Equipe (SEMPRE usa coletasTime, ignorando o filtro de usuário)
     final porUsuarioRanking = groupBy(coletasTime, (ColetaModel c) => c.usuarioId);

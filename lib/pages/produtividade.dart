@@ -396,8 +396,8 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
                               PieChartData(
                                 sectionsSpace: 2,
                                 centerSpaceRadius: 40,
-                                sections: provider.progressoPorLoja.where((s) => s.coletados > 0).map((s) {
-                                  final color = Colors.primaries[provider.progressoPorLoja.indexOf(s) % Colors.primaries.length];
+                                sections: provider.distribuicaoPorLoja.map((s) {
+                                  final color = Colors.primaries[provider.distribuicaoPorLoja.indexOf(s) % Colors.primaries.length];
                                   return PieChartSectionData(
                                     value: s.coletados.toDouble(),
                                     title: '${((s.coletados / provider.totalColetados) * 100).toStringAsFixed(0)}%',
@@ -414,8 +414,8 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
                           Wrap(
                             spacing: 8,
                             runSpacing: 4,
-                            children: provider.progressoPorLoja.where((s) => s.coletados > 0).map((s) {
-                              final color = Colors.primaries[provider.progressoPorLoja.indexOf(s) % Colors.primaries.length];
+                            children: provider.distribuicaoPorLoja.map((s) {
+                              final color = Colors.primaries[provider.distribuicaoPorLoja.indexOf(s) % Colors.primaries.length];
                               return Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -453,8 +453,8 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
                         PieChartData(
                           sectionsSpace: 2,
                           centerSpaceRadius: 30,
-                          sections: provider.progressoPorLoja.where((s) => s.coletados > 0).map((s) {
-                            final color = Colors.primaries[provider.progressoPorLoja.indexOf(s) % Colors.primaries.length];
+                          sections: provider.distribuicaoPorLoja.map((s) {
+                            final color = Colors.primaries[provider.distribuicaoPorLoja.indexOf(s) % Colors.primaries.length];
                             return PieChartSectionData(
                               value: s.coletados.toDouble(),
                               title: '${((s.coletados / provider.totalColetados) * 100).toStringAsFixed(0)}%',
@@ -470,8 +470,8 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 4,
-                      children: provider.progressoPorLoja.where((s) => s.coletados > 0).map((s) {
-                        final color = Colors.primaries[provider.progressoPorLoja.indexOf(s) % Colors.primaries.length];
+                      children: provider.distribuicaoPorLoja.map((s) {
+                        final color = Colors.primaries[provider.distribuicaoPorLoja.indexOf(s) % Colors.primaries.length];
                         return Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -597,6 +597,12 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
   }
 
   Widget _buildStoreProgressSection(BuildContext context, ProdutividadeProvider provider) {
+    final filteredStores = provider.lojaIdFiltro != null
+        ? provider.progressoPorLoja.where((s) => s.id == provider.lojaIdFiltro).toList()
+        : provider.progressoPorLoja;
+
+    if (filteredStores.isEmpty) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -605,10 +611,10 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: provider.progressoPorLoja.length,
+          itemCount: filteredStores.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
-            final store = provider.progressoPorLoja[index];
+            final store = filteredStores[index];
             return Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
