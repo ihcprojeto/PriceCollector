@@ -68,6 +68,11 @@ class _ScannerPageState extends State<ScannerPage> {
     setState(() => _isScanning = false);
     _scannerController.stop();
 
+    if (!_isBarcodeValid(barcode)) {
+      _showWarningDialog('Código de barras inválido');
+      return;
+    }
+
     final provider = context.read<ProdutoProvider>();
     final user = context.read<DashboardProvider>().usuario;
     final isAdmin = user?.funcao == 'administrador';
@@ -77,7 +82,7 @@ class _ScannerPageState extends State<ScannerPage> {
     if (!mounted) return;
 
     if (demanda == null) {
-      _showNotFoundDialog(isAdmin);
+      _showNotFoundDialog(isAdmin, barcode);
     } else if (demanda.status == 'cancelado') {
       _showWarningDialog('Este produto foi cancelado na demanda atual.');
     } else if (demanda.status == 'coletado') {
@@ -91,14 +96,50 @@ class _ScannerPageState extends State<ScannerPage> {
     }
   }
 
-  void _showNotFoundDialog(bool isAdmin) {
+  bool _isBarcodeValid(String barcode) {
+    if (barcode.isEmpty) return false;
+    // Apenas dígitos
+    if (!RegExp(r'^\d+$').hasMatch(barcode)) return false;
+
+    // Formatos comuns: UPC-E (6), EAN-8 (8), UPC-A (12), EAN-13 (13), ITF-14 (14)
+    final validLengths = [6, 8, 12, 13, 14];
+    if (!validLengths.contains(barcode.length)) return false;
+
+    // Checksum para EAN e UPC (se tiver 8, 12 ou 13 dígitos)
+    if (barcode.length == 8 || barcode.length == 12 || barcode.length == 13) {
+      return _validateChecksum(barcode);
+    }
+
+    return true;
+  }
+
+  bool _validateChecksum(String barcode) {
+    try {
+      int sum = 0;
+      int length = barcode.length;
+      int checkDigit = int.parse(barcode[length - 1]);
+
+      for (int i = 0; i < length - 1; i++) {
+        int digit = int.parse(barcode[length - 2 - i]);
+        int weight = (i % 2 == 0) ? 3 : 1;
+        sum += digit * weight;
+      }
+
+      int calculatedCheckDigit = (10 - (sum % 10)) % 10;
+      return calculatedCheckDigit == checkDigit;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _showNotFoundDialog(bool isAdmin, String barcode) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('Produto Não Encontrado'),
         content: Text(isAdmin
-            ? 'Este item não está nas demandas atuais. Para adicioná-lo, importe um novo produto.'
+            ? 'Este item não está nas demandas atuais. Deseja abrir o gerenciamento para localizá-lo ou cadastrá-lo?'
             : 'Este item não está nas demandas atuais. Para adicioná-lo, entre em contato com um administrador.'),
         actions: [
           TextButton(
@@ -112,10 +153,10 @@ class _ScannerPageState extends State<ScannerPage> {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                context.pushNamed('listaProdutos', extra: widget.loja);
+                context.pushNamed('gerenciamento_produtos', extra: barcode);
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-              child: const Text('Importar Produto', style: TextStyle(color: Colors.white)),
+              child: const Text('Abrir gerenciamento', style: TextStyle(color: Colors.white)),
             ),
         ],
       ),

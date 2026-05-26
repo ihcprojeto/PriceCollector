@@ -9,7 +9,8 @@ import '../utils/responsive.dart';
 import '../widgets/responsive_body.dart';
 
 class GerenciamentoProdutosPage extends StatefulWidget {
-  const GerenciamentoProdutosPage({super.key});
+  final String? initialSearch;
+  const GerenciamentoProdutosPage({super.key, this.initialSearch});
 
   static const String routeName = 'gerenciamento_produtos';
   static const String routePath = '/gerenciamento_produtos';
@@ -20,13 +21,20 @@ class GerenciamentoProdutosPage extends StatefulWidget {
 
 class _GerenciamentoProdutosPageState extends State<GerenciamentoProdutosPage> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   String _orderBy = 'Nome';
 
   @override
   void initState() {
     super.initState();
+    _searchController.text = widget.initialSearch ?? '';
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<GerenciamentoProdutoProvider>().fetchProdutos();
+      final provider = context.read<GerenciamentoProdutoProvider>();
+      provider.fetchProdutos();
+      if (widget.initialSearch != null) {
+        provider.setSearchQuery(widget.initialSearch!);
+        _searchFocusNode.requestFocus();
+      }
       context.read<LojaProvider>().fetchLojas();
     });
   }
@@ -34,6 +42,7 @@ class _GerenciamentoProdutosPageState extends State<GerenciamentoProdutosPage> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -309,6 +318,7 @@ class _GerenciamentoProdutosPageState extends State<GerenciamentoProdutosPage> {
           Expanded(
             child: TextField(
               controller: _searchController,
+              focusNode: _searchFocusNode,
               decoration: InputDecoration(
                 hintText: 'Buscar produtos...',
                 prefixIcon: const Icon(Icons.search),

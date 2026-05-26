@@ -176,7 +176,7 @@ class MyApp extends StatelessWidget {
       GoRoute(
         name: 'gerenciamento_produtos',
         path: '/gerenciamento_produtos',
-        builder: (context, state) => const GerenciamentoProdutosPage(),
+        builder: (context, state) => GerenciamentoProdutosPage(initialSearch: state.extra as String?),
       ),
     ],
   );
