@@ -33,14 +33,11 @@ class GerenciamentoProdutoProvider with ChangeNotifier {
     try {
       final data = await _repository.getTodosProdutos();
       
-      // 1. Carrega produtos imediatamente (estado inicial)
       _produtos = data;
       _applyFilters();
       _isLoading = false;
       notifyListeners();
 
-      // 2. Busca TODAS as demandas de uma vez para contar a presença
-      // Isso evita a necessidade de índices compostos e reduz milhares de leituras para poucas
       Map<String, int> contagemPresenca = {};
       
       try {
@@ -53,7 +50,6 @@ class GerenciamentoProdutoProvider with ChangeNotifier {
         }
       } catch (e) {
         debugPrint('Erro ao buscar demandas via collectionGroup: $e');
-        // Fallback: Se o collectionGroup falhar, tentamos iterar pelas lojas (mais lento, mas garantido)
         final lojas = await FirebaseFirestore.instance.collection('lojas').get();
         for (var lojaDoc in lojas.docs) {
           final demandas = await lojaDoc.reference.collection('demandas').get();
@@ -66,7 +62,6 @@ class GerenciamentoProdutoProvider with ChangeNotifier {
         }
       }
 
-      // 3. Atualiza a lista com as contagens reais
       _produtos = data.map((p) => p.copyWith(
         totalLojas: contagemPresenca[p.barcode] ?? 0
       )).toList();
@@ -166,7 +161,6 @@ class GerenciamentoProdutoProvider with ChangeNotifier {
       for (var lojaId in lojaIds) {
         for (var prod in selectedProds) {
           try {
-            // Verifica se já existe na loja
             final existente = await _repository.getDemandaByBarcode(lojaId, prod.barcode);
             if (existente != null) {
               ignorados++;
@@ -245,7 +239,6 @@ class GerenciamentoProdutoProvider with ChangeNotifier {
         final barcode = getVal(0);
         if (barcode.isEmpty) continue;
 
-        // Verifica duplicidade global
         final doc = await FirebaseFirestore.instance.collection('produtos').doc(barcode).get();
         if (doc.exists) {
           ignorados++;

@@ -12,7 +12,6 @@ import '../providers/perfil_provider.dart';
 import '../providers/loja_provider.dart';
 import '../providers/produto_provider.dart';
 import '../models/coleta_model.dart';
-import '../models/demanda_model.dart';
 
 class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key});
@@ -27,14 +26,12 @@ class PerfilPage extends StatefulWidget {
 class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
   late TabController _tabBarController;
   
-  // Controllers para Edição de Perfil
   final TextEditingController _matriculaController = TextEditingController();
   final TextEditingController _nomeController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _senhaAtualController = TextEditingController();
   final TextEditingController _novaSenhaController = TextEditingController();
 
-  // Controllers para Filtro de Coletas
   final TextEditingController _searchColetaController = TextEditingController();
   String? _filterLoja;
   String _orderBy = 'Nome (A-Z)';
@@ -54,7 +51,6 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
         _emailController.text = user.email;
         _matriculaController.text = user.matricula;
         
-        // Iniciar carregamento de dados das abas
         context.read<ColetaProvider>().fetchColetas(usuarioId: user.id);
         context.read<PerfilProvider>().fetchDispositivos(user.id!);
         context.read<LojaProvider>().fetchLojas();
@@ -195,7 +191,6 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
     );
   }
 
-  // --- TAB: MINHAS COLETAS ---
   Widget _buildMinhasColetasTab() {
     final coletaProvider = context.watch<ColetaProvider>();
     final lojaProvider = context.watch<LojaProvider>();
@@ -365,7 +360,6 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
     );
   }
 
-  // --- TAB: DISPOSITIVOS ---
   Widget _buildDispositivosTab(String userId) {
     final perfilProvider = context.watch<PerfilProvider>();
 
@@ -423,7 +417,6 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
     );
   }
 
-  // --- TAB: EDITAR PERFIL ---
   Widget _buildEditarPerfilTab(String uid) {
     final provider = context.watch<PerfilProvider>();
 
@@ -478,8 +471,6 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
     );
   }
 
-  // --- LÓGICA DE AÇÕES ---
-
   Future<void> _handleSaveProfile(String uid) async {
     if (_senhaAtualController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Informe sua senha atual para salvar.')));
@@ -517,9 +508,8 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
       }
       _senhaAtualController.clear();
       _novaSenhaController.clear();
-      await context.read<DashboardProvider>().carregarDadosUsuario(); // Atualizar header
+      await context.read<DashboardProvider>().carregarDadosUsuario();
     } else if (mounted) {
-      // O erro já está no provider.errorMessage e é exibido na Tab de edição
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.read<PerfilProvider>().errorMessage ?? 'Erro ao atualizar perfil.'))
       );

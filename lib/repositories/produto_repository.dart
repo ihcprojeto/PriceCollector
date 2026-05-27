@@ -5,8 +5,6 @@ import '../models/produto_model.dart';
 class ProdutoRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // --- MÉTODOS DE PRODUTOS (CATÁLOGO GLOBAL) ---
-
   Future<List<ProdutoModel>> getTodosProdutos() async {
     final snapshot = await _firestore.collection('produtos').get();
     return snapshot.docs.map((doc) => ProdutoModel.fromFirestore(doc.data())).toList();
@@ -15,12 +13,8 @@ class ProdutoRepository {
   Future<void> excluirProdutoPermanente(String barcode) async {
     final batch = _firestore.batch();
 
-    // 1. Deleta da coleção global de produtos
     batch.delete(_firestore.collection('produtos').doc(barcode));
 
-    // 2. Deleta de todas as subcoleções de demandas
-    // Como usamos o barcode como ID do documento em todas as lojas, 
-    // podemos iterar as lojas e deletar diretamente sem precisar de collectionGroup com filtro (que exige índice)
     final lojasSnapshot = await _firestore.collection('lojas').get();
     for (var lojaDoc in lojasSnapshot.docs) {
       batch.delete(lojaDoc.reference.collection('demandas').doc(barcode));
@@ -30,8 +24,6 @@ class ProdutoRepository {
   }
 
   Future<int> getContagemLojasDoProduto(String barcode) async {
-    // Para evitar a necessidade de índice composto no collectionGroup, 
-    // podemos verificar em cada loja se o documento com o ID do barcode existe.
     final lojasSnapshot = await _firestore.collection('lojas').get();
     int count = 0;
     
@@ -42,8 +34,6 @@ class ProdutoRepository {
     
     return count;
   }
-
-  // --- MÉTODOS DE DEMANDAS ---
 
   Stream<List<DemandaModel>> getDemandas(String lojaId) {
     return _firestore
@@ -77,7 +67,6 @@ class ProdutoRepository {
   }
 
   Future<int> importarDemandas(String lojaId, List<DemandaModel> novasDemandas) async {
-    // 1. Busca barcodes existentes na loja para evitar duplicidade
     final snapshot = await _firestore
         .collection('lojas')
         .doc(lojaId)
@@ -98,23 +87,20 @@ class ProdutoRepository {
         continue;
       }
       aImportar.add(demanda);
-      existingBarcodes.add(demanda.barcode); // Evita duplicados na própria lista de importação
+      existingBarcodes.add(demanda.barcode);
     }
 
     if (aImportar.isEmpty) return ignoredCount;
 
-    // 2. Processa em lotes (limite de 500 do Firestore)
     for (var i = 0; i < aImportar.length; i += 500) {
       final batch = _firestore.batch();
       final end = (i + 500 < aImportar.length) ? i + 500 : aImportar.length;
       final chunk = aImportar.sublist(i, end);
 
       for (var demanda in chunk) {
-        // Usa barcode como ID para garantir unicidade estrutural na subcoleção de demandas
         final demandaDocRef = demandasCollection.doc(demanda.barcode);
         batch.set(demandaDocRef, demanda.toMap());
 
-        // Atualiza/Cria na coleção global de produtos
         final produtoDocRef = produtosCollection.doc(demanda.barcode);
         batch.set(produtoDocRef, {
           'barcode': demanda.barcode,
@@ -162,7 +148,6 @@ class ProdutoRepository {
             .get();
         return snapshot.size;
       } catch (e) {
-        // Fallback para evitar erro de falta de índice no dashboard
         final snapshot = await _firestore.collectionGroup('demandas').get();
         return snapshot.docs.where((doc) => doc.data()['status'] != 'cancelado').length;
       }

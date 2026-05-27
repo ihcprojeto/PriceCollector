@@ -164,16 +164,13 @@ class ProdutoProvider with ChangeNotifier {
       
       if (table.rows.isEmpty) throw 'O arquivo Excel está vazio';
 
-      // Mapeamento local para evitar duplicatas no próprio Excel
       Map<String, DemandaModel> uniqueDemandas = {};
       int excelDuplicates = 0;
 
-      // Itera sobre as linhas, pulando o cabeçalho (index 0)
       for (var i = 1; i < table.rows.length; i++) {
         final row = table.rows[i];
         if (row.isEmpty) continue;
 
-        // Função auxiliar para pegar valor de forma segura
         String getVal(int index) {
           if (index >= row.length) return '';
           final cell = row[index];

@@ -77,7 +77,6 @@ class LoginProvider with ChangeNotifier {
           return false;
         }
 
-        // Regra de Negócio: Salvar dispositivo utilizado
         await _authRepository.registrarDispositivoUtilizado(
           uid,
           _dispositivoSelecionado!.modelo,

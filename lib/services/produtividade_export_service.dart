@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:collection/collection.dart';
 import 'package:pdf/pdf.dart';
@@ -33,7 +31,6 @@ class ProdutividadeExportService {
             ),
             pw.SizedBox(height: 10),
 
-            // Filtros Aplicados
             pw.Container(
               padding: const pw.EdgeInsets.all(10),
               decoration: pw.BoxDecoration(
@@ -62,7 +59,6 @@ class ProdutividadeExportService {
             ),
             pw.SizedBox(height: 20),
             
-            // Métricas Globais
             pw.Text('Métricas Globais', style: pw.TextStyle(font: fontBold, fontSize: 14)),
             pw.Divider(),
             pw.Row(
@@ -76,7 +72,6 @@ class ProdutividadeExportService {
             ),
             pw.SizedBox(height: 30),
 
-            // Ranking da Equipe
             pw.Text('Ranking da Equipe', style: pw.TextStyle(font: fontBold, fontSize: 14)),
             pw.TableHelper.fromTextArray(
               headers: ['Pos', 'Nome', 'Matrícula', 'Itens', 'Velocidade', 'Tempo Médio'],
@@ -105,7 +100,6 @@ class ProdutividadeExportService {
             ),
             pw.SizedBox(height: 30),
 
-            // Progresso por Loja
             pw.Text('Progresso por Loja', style: pw.TextStyle(font: fontBold, fontSize: 14)),
             pw.TableHelper.fromTextArray(
               headers: ['Loja', 'Coletados', 'Total', '%'],

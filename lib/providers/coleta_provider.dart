@@ -43,11 +43,10 @@ class ColetaProvider with ChangeNotifier {
         _coletas = data;
         
         try {
-          // Tenta buscar o total, mas não trava o fluxo se falhar (ex: falta de índice)
           _totalDemandas = await _produtoRepository.getTotalDemandas(lojaId: _lojaIdFiltro);
         } catch (e) {
           debugPrint('Aviso: Falha ao calcular total de demandas (provavelmente falta de índice): $e');
-          _totalDemandas = 0; // Define como 0 para não quebrar o cálculo do progresso
+          _totalDemandas = 0;
         }
 
         _applyFiltersAndSort();

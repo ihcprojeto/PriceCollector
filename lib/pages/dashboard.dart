@@ -79,15 +79,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header de Boas-vindas
                     _buildWelcomeHeader(usuario),
                     const SizedBox(height: 24),
                     
-                    // Status do Dispositivo
                     _buildDeviceStatus(loginProvider.dispositivoSelecionado?.displayName),
                     const SizedBox(height: 32),
 
-                    // Grid de Ações
                     Text(
                       'Acesso Rápido',
                       style: GoogleFonts.interTight(

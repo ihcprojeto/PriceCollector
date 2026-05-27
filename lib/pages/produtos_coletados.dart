@@ -76,7 +76,6 @@ class _ProdutosColetadosPageState extends State<ProdutosColetadosPage> {
     final lojaProvider = context.read<LojaProvider>();
     final produtoProvider = context.read<ProdutoProvider>();
     
-    // Precisamos da LojaModel e DemandaModel para a tela de coleta
     final loja = lojaProvider.lojas.firstWhere((l) => l.id == coleta.lojaId);
     final demanda = await produtoProvider.validarBarcode(coleta.lojaId, coleta.produtoBarcode);
 
@@ -84,7 +83,7 @@ class _ProdutosColetadosPageState extends State<ProdutosColetadosPage> {
       context.pushNamed('coleta', extra: {
         'loja': loja,
         'demanda': demanda,
-        'coleta': coleta, // Passamos a coleta existente para edição
+        'coleta': coleta,
       });
     }
   }

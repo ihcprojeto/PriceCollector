@@ -297,7 +297,7 @@ class _ColetaPageState extends State<ColetaPage> {
                     : Image.asset(
                         widget.demanda.produtoImagemUrl.isNotEmpty
                             ? widget.demanda.produtoImagemUrl
-                            : 'assets/images/yopro.webp', // fallback
+                            : 'assets/images/yopro.webp',
                         width: 80,
                         height: 80,
                         fit: BoxFit.cover,

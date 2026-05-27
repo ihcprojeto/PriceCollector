@@ -12,8 +12,6 @@ class LojaService {
   }
 
   Future<void> deleteLoja(String id) async {
-    // Seguindo as regras de negócio, podemos optar por exclusão lógica (setar ativo: false) 
-    // ou exclusão física. Para este exemplo, faremos a física conforme solicitado.
     await _firestore.collection('lojas').doc(id).delete();
   }
 }

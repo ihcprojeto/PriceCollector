@@ -8,16 +8,13 @@ class AuthRepository {
 
   Future<UserCredential> signUp(UsuarioModel usuario) async {
     try {
-      // 1. Criar usuário no Firebase Auth
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: usuario.email,
         password: usuario.senha,
       );
 
-      // 2. Salvar dados adicionais no Firestore
       if (userCredential.user != null) {
         final uid = userCredential.user!.uid;
-        // Não salvamos a senha no Firestore por segurança
         final userData = usuario.toJson();
         userData.remove('senha');
         
@@ -25,11 +22,6 @@ class AuthRepository {
             .collection('usuarios')
             .doc(uid)
             .set(userData);
-
-        // Regra: Criar automaticamente a subcoleção dispositivos_utilizados
-        // Como o Firestore precisa de um doc, podemos deixar a subcoleção pronta
-        // ou adicionar um documento inicial vazio se necessário. 
-        // A regra diz "deve ser criada", então garantimos o acesso ao caminho.
       }
 
       return userCredential;
@@ -46,7 +38,6 @@ class AuthRepository {
     try {
       String email = identificador.trim();
 
-      // Se não for e-mail, busca por matrícula
       if (!identificador.contains('@')) {
         final query = await _firestore
             .collection('usuarios')
@@ -82,7 +73,6 @@ class AuthRepository {
         .doc(userId)
         .collection('dispositivos_utilizados');
 
-    // Verificar se o dispositivo já existe para este usuário
     final query = await subcolecao
         .where('serialDispositivo', isEqualTo: serial)
         .where('modeloDispositivo', isEqualTo: modelo)
@@ -108,7 +98,6 @@ class AuthRepository {
   Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
     await _firestore.collection('usuarios').doc(uid).update(data);
 
-    // Sincronizar com a coleção coletas
     final Map<String, dynamic> coletasUpdate = {};
     if (data.containsKey('nome')) coletasUpdate['usuarioNome'] = data['nome'];
     if (data.containsKey('matricula')) coletasUpdate['usuarioMatricula'] = data['matricula'];
@@ -138,24 +127,18 @@ class AuthRepository {
     if (user == null || user.email == null) throw 'Usuário não autenticado.';
 
     try {
-      // 1. Reautenticar
       AuthCredential credential = EmailAuthProvider.credential(
         email: user.email!,
         password: currentPassword,
       );
       await user.reauthenticateWithCredential(credential);
 
-      // 2. Atualizar Senha (se fornecida)
       if (newPassword != null && newPassword.isNotEmpty) {
         await user.updatePassword(newPassword);
       }
 
-      // 3. Atualizar Email (se fornecido e diferente)
       if (newEmail != null && newEmail.isNotEmpty && newEmail != user.email) {
-         // O método updateEmail foi removido nas versões recentes do Firebase Auth (5.0+).
-        // Agora deve-se usar verifyBeforeUpdateEmail, que envia um link de confirmação.
-        // O e-mail no Firebase Auth só será alterado após o usuário clicar no link.
-        await _auth.setLanguageCode('pt'); // Definir idioma para português
+        await _auth.setLanguageCode('pt');
         await user.verifyBeforeUpdateEmail(newEmail);
       }
 
@@ -174,7 +157,6 @@ class AuthRepository {
         .where('matricula', isEqualTo: matricula)
         .get();
 
-    // Se encontrar alguém com essa matrícula que não seja o próprio usuário
     return !query.docs.any((doc) => doc.id != currentUserId);
   }
 
@@ -230,8 +212,6 @@ class AuthRepository {
     if (doc.exists) {
       final firestoreEmail = doc.data()?['email'];
       if (firestoreEmail != user.email) {
-        // O e-mail no Auth mudou (ex: via verificação de e-mail), mas no Firestore não.
-        // Sincronizamos para garantir que o login por matrícula funcione.
         await _firestore.collection('usuarios').doc(uid).update({'email': user.email});
         print('Sync: Firestore e-mail atualizado para ${user.email}');
       }

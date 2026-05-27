@@ -24,9 +24,6 @@ class LojaProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Usando stream para tempo real ou get para uma única vez. 
-      // Requisito pede "carregar dados", vamos usar get para facilitar o filtro local inicial.
-      // Mas o Repository tem getLojas() como Stream. Vou adaptar.
       _repository.getLojas().listen((lojasList) {
         _lojas = lojasList;
         _filteredLojas = lojasList;

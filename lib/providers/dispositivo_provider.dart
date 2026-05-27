@@ -7,9 +7,9 @@ import '../repositories/dispositivo_repository.dart';
 class DeviceUsageStats {
   final int totalColetas;
   final DateTime? ultimaAtividade;
-  final Map<String, int> coletasPorUsuario; // usuarioId -> count
-  final Map<String, String> nomesUsuarios; // usuarioId -> nome
-  final Map<String, String> matriculasUsuarios; // usuarioId -> matricula
+  final Map<String, int> coletasPorUsuario;
+  final Map<String, String> nomesUsuarios;
+  final Map<String, String> matriculasUsuarios;
 
   DeviceUsageStats({
     required this.totalColetas,
@@ -36,7 +36,6 @@ class DispositivoProvider with ChangeNotifier {
   Map<String, DeviceUsageStats> _usageStats = {};
   Map<String, DeviceUsageStats> get usageStats => _usageStats;
 
-  // Métricas de Dashboard
   int totalAtivos = 0;
   int totalInativos = 0;
   String mostUsedDevice = '--';
@@ -51,14 +50,11 @@ class DispositivoProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Buscar todos os dispositivos
       _allDispositivos = await _repository.getAllDispositivos();
       
-      // 2. Buscar todas as coletas para consolidar estatísticas
       final allColetas = await _repository.getAllColetas();
       totalOperacoes = allColetas.length;
 
-      // 3. Consolidar estatísticas por dispositivo
       _usageStats = {};
       final coletasPorDisp = groupBy(allColetas, (ColetaModel c) => c.dispositivoId);
       
@@ -75,7 +71,6 @@ class DispositivoProvider with ChangeNotifier {
         );
       }
 
-      // 4. Calcular métricas globais
       totalAtivos = _allDispositivos.where((d) => d.ativo).length;
       totalInativos = _allDispositivos.length - totalAtivos;
       
@@ -112,7 +107,6 @@ class DispositivoProvider with ChangeNotifier {
              d.serial.toLowerCase().contains(search);
     }).toList();
 
-    // Ordenação
     if (_orderBy == 'Utilização (Maior)') {
       _filteredDispositivos.sort((a, b) {
         final countA = _usageStats[a.id]?.totalColetas ?? 0;
@@ -135,7 +129,6 @@ class DispositivoProvider with ChangeNotifier {
   Future<void> toggleStatus(String id, bool newStatus) async {
     try {
       await _repository.toggleStatus(id, newStatus);
-      // Atualiza localmente para feedback imediato
       final index = _allDispositivos.indexWhere((d) => d.id == id);
       if (index != -1) {
         _allDispositivos[index] = DispositivoModel(
@@ -145,7 +138,7 @@ class DispositivoProvider with ChangeNotifier {
           serial: _allDispositivos[index].serial,
           ativo: newStatus,
         );
-        carregarDados(); // Recarrega para atualizar métricas
+        carregarDados();
       }
     } catch (e) {
       _errorMessage = 'Erro ao alterar status: $e';

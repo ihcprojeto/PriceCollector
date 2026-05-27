@@ -6,7 +6,6 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Busca o email por matrícula caso o usuário tenha digitado a matrícula
   Future<String?> _getEmailByMatricula(String matricula) async {
     final query = await _firestore
         .collection('usuarios')
@@ -23,7 +22,6 @@ class AuthService {
   Future<UserCredential> login(String identificador, String senha) async {
     String email = identificador;
 
-    // Verifica se é email ou matrícula (simples regex ou presença de @)
     if (!identificador.contains('@')) {
       final emailEncontrado = await _getEmailByMatricula(identificador);
       if (emailEncontrado == null) {

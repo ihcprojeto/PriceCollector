@@ -60,7 +60,6 @@ class PerfilProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Validar matrícula duplicada antes de qualquer ação sensível
       final disponivel = await _authRepository.isMatriculaDisponivel(matricula, uid);
       if (!disponivel) {
         throw 'Esta matrícula já está sendo utilizada por outro usuário.';
@@ -69,7 +68,6 @@ class PerfilProvider with ChangeNotifier {
       final currentEmail = _authRepository.currentUser?.email;
       bool emailChangeInitiated = email != currentEmail;
 
-      // 2. Reautenticar e atualizar dados sensíveis no Firebase Auth (Senha e/ou Email)
       await _authRepository.reauthenticateAndChangeSensitiveData(
         senhaAtual,
         newPassword: novaSenha,
@@ -77,9 +75,7 @@ class PerfilProvider with ChangeNotifier {
       );
       debugPrint('PerfilProvider: Dados sensíveis (Auth) processados.');
 
-      // 3. Atualizar dados no Firestore
-      // Se verifyBeforeUpdateEmail foi usado, o currentUser?.email ainda é o antigo.
-      // Sincronizamos o Firestore apenas com o que o Auth aceita no momento.
+
       final String finalEmail = _authRepository.currentUser?.email ?? email;
 
       await _authRepository.updateUserProfile(uid, {

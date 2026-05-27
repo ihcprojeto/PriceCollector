@@ -25,7 +25,6 @@ class DispositivoRepository {
     return query.docs.map((doc) => ColetaModel.fromFirestore(doc.data(), doc.id)).toList();
   }
 
-  // Busca todas as coletas para agregação global de métricas de dispositivos
   Future<List<ColetaModel>> getAllColetas() async {
     final query = await _firestore.collection('coletas').get();
     return query.docs.map((doc) => ColetaModel.fromFirestore(doc.data(), doc.id)).toList();

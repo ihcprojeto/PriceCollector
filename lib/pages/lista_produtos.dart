@@ -91,7 +91,6 @@ class _ListaProdutosPageState extends State<ListaProdutosPage> {
   Widget build(BuildContext context) {
     final produtoProvider = context.watch<ProdutoProvider>();
     final user = context.watch<DashboardProvider>().usuario;
-    final isAdmin = user?.funcao == 'administrador';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -232,7 +231,7 @@ class _ListaProdutosPageState extends State<ListaProdutosPage> {
   }
 
   Widget _buildProductCard(DemandaModel demanda) {
-    Color borderColor = AppTheme.primary; // Borda roxa para pendentes por padrão
+    Color borderColor = AppTheme.primary;
     Widget? statusIcon;
 
     if (demanda.status == 'coletado') {

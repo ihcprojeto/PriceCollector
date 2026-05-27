@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 class CloudinaryService {
   final String cloudName = 'dgccbfglb';
-  final String uploadPreset = 'ml_default'; // TODO: Substituir pelo seu Upload Preset real se for diferente
+  final String uploadPreset = 'ml_default';
 
   Future<String?> uploadImage(File imageFile, {String? folder}) async {
     final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');

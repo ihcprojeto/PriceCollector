@@ -4,7 +4,7 @@ class ProdutoModel {
   final String marca;
   final String descricao;
   final String imagemUrl;
-  final int totalLojas; // Calculado em tempo de execução ou via agregação
+  final int totalLojas;
 
   ProdutoModel({
     required this.barcode,

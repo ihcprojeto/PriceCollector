@@ -85,7 +85,6 @@ class _DispositivoPageState extends State<DispositivoPage> {
     final provider = context.watch<DispositivoProvider>();
     final user = context.watch<DashboardProvider>().usuario;
 
-    // Proteção de segurança
     if (user != null && user.funcao != 'administrador') {
       return const Scaffold(body: Center(child: Text('Acesso negado.')));
     }

@@ -8,16 +8,13 @@ class ColetaRepository {
     final batch = _firestore.batch();
 
     if (coleta.id == null || coleta.id!.isEmpty) {
-      // 1. Criar nova coleta
       final coletaRef = _firestore.collection('coletas').doc();
       batch.set(coletaRef, coleta.toMap());
     } else {
-      // 1. Atualizar coleta existente
       final coletaRef = _firestore.collection('coletas').doc(coleta.id);
       batch.update(coletaRef, coleta.toMap());
     }
 
-    // 2. Atualizar o status da demanda na subcoleção da loja
     final demandaRef = _firestore
         .collection('lojas')
         .doc(coleta.lojaId)
@@ -63,12 +60,8 @@ class ColetaRepository {
   Future<void> excluirColeta(String coletaId, String lojaId, String barcode) async {
     final batch = _firestore.batch();
 
-    // 1. Deletar documento da coleção coletas
     batch.delete(_firestore.collection('coletas').doc(coletaId));
 
-    // 2. Buscar a demanda correspondente para voltar o status para pendente
-    // Como o firestore.md não define o ID da demanda dentro da coleta, 
-    // precisamos buscar pela loja e barcode.
     final demandaQuery = await _firestore
         .collection('lojas')
         .doc(lojaId)

@@ -5,11 +5,9 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../models/loja_model.dart';
-import '../models/demanda_model.dart';
 import '../providers/dashboard_provider.dart';
 import '../providers/produto_provider.dart';
 import '../theme/app_theme.dart';
-import '../utils/responsive.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/responsive_body.dart';
 
@@ -88,7 +86,6 @@ class _ScannerPageState extends State<ScannerPage> {
     } else if (demanda.status == 'coletado') {
       _showWarningDialog('Este produto já foi coletado na demanda atual.');
     } else {
-      // Produto Válido e Pendente
       context.pushNamed('coleta', extra: {
         'loja': widget.loja,
         'demanda': demanda,
@@ -98,14 +95,11 @@ class _ScannerPageState extends State<ScannerPage> {
 
   bool _isBarcodeValid(String barcode) {
     if (barcode.isEmpty) return false;
-    // Apenas dígitos
     if (!RegExp(r'^\d+$').hasMatch(barcode)) return false;
 
-    // Formatos comuns: UPC-E (6), EAN-8 (8), UPC-A (12), EAN-13 (13), ITF-14 (14)
     final validLengths = [6, 8, 12, 13, 14];
     if (!validLengths.contains(barcode.length)) return false;
 
-    // Checksum para EAN e UPC (se tiver 8, 12 ou 13 dígitos)
     if (barcode.length == 8 || barcode.length == 12 || barcode.length == 13) {
       return _validateChecksum(barcode);
     }
@@ -226,7 +220,6 @@ class _ScannerPageState extends State<ScannerPage> {
                             controller: _scannerController,
                             onDetect: _onDetect,
                           ),
-                          // Overlay visual para área de leitura
                           Container(
                             width: 200,
                             height: 200,

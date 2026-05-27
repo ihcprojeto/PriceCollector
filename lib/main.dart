@@ -6,14 +6,11 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'models/coleta_model.dart';
 import 'theme/app_theme.dart';
-// Repositories
 import 'repositories/auth_repository.dart';
 
-// Models
 import 'models/loja_model.dart';
 import 'models/demanda_model.dart';
 
-// Providers
 import 'providers/cadastro_provider.dart';
 import 'providers/loja_provider.dart';
 import 'providers/login_provider.dart';
@@ -25,7 +22,6 @@ import 'providers/produtividade_provider.dart';
 import 'providers/dispositivo_provider.dart';
 import 'providers/gerenciamento_produto_provider.dart';
 
-// Import de todas as páginas convertidas
 import 'pages/login.dart';
 import 'pages/cadastro.dart';
 import 'pages/dashboard.dart';
@@ -92,9 +88,8 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // Configuração do GoRouter
   static final _router = GoRouter(
-    initialLocation: '/', // Começa na Splash Screen
+    initialLocation: '/',
     routes: [
       GoRoute(
         name: 'splash',

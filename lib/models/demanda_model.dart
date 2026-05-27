@@ -5,7 +5,7 @@ class DemandaModel {
   final String produtoImagemUrl;
   final String produtoMarca;
   final String produtoNome;
-  final String status; // 'pendente', 'coletado', 'cancelado'
+  final String status;
 
   DemandaModel({
     required this.id,

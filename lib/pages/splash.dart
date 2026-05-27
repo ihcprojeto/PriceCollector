@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../theme/app_theme.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -18,7 +17,6 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _navigateToNext() async {
-    // Simula um tempo de carregamento para mostrar a splash screen
     await Future.delayed(const Duration(seconds: 3));
     if (mounted) {
       context.goNamed('login');
@@ -43,7 +41,6 @@ class _SplashPageState extends State<SplashPage> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Imagem de fundo ajustada para não cortar
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: Image.asset(
@@ -51,7 +48,6 @@ class _SplashPageState extends State<SplashPage> {
                 fit: BoxFit.contain,
               ),
             ),
-          // Indicador de carregamento posicionado mais abaixo
           Positioned(
             bottom: 80,
             left: 0,

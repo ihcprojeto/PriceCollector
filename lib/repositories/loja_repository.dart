@@ -12,7 +12,6 @@ class LojaRepository {
     if (loja.id != null) {
       await _firestore.collection('lojas').doc(loja.id).update(loja.toMap());
 
-      // Atualizar informações correspondentes na coleção coletas
       final coletasQuery = await _firestore
           .collection('coletas')
           .where('lojaId', isEqualTo: loja.id)

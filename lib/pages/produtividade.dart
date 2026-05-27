@@ -105,7 +105,6 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
         spacing: 16,
         runSpacing: 16,
         children: [
-          // Filtro de Período
           _buildFilterItem(
             label: 'Período',
             child: Row(
@@ -152,7 +151,6 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
               ],
             ),
           ),
-          // Filtro de Loja
           _buildFilterItem(
             label: 'Loja',
             child: SizedBox(
@@ -173,7 +171,6 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
               ),
             ),
           ),
-          // Filtro de Colaborador
           _buildFilterItem(
             label: 'Colaborador',
             child: SizedBox(
@@ -325,7 +322,6 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
                     child: Stack(
                       children: [
-                        // Rótulos de Eixos
                         Positioned(top: 0, left: 0, child: Text('Quantidade Itens', style: GoogleFonts.inter(fontSize: 10, color: Colors.grey))),
                         Positioned(bottom: 0, right: 0, child: Text('Dia', style: GoogleFonts.inter(fontSize: 10, color: Colors.grey))),
                         
@@ -410,7 +406,6 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          // Legenda
                           Wrap(
                             spacing: 8,
                             runSpacing: 4,
@@ -508,18 +503,15 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
       while (temp.isBefore(now)) {
         final currentEndHour = getEndHour(temp);
         
-        // Se for antes das 8:00, pula para as 8:00 do mesmo dia
         if (temp.isBefore(DateTime(temp.year, temp.month, temp.day, 8, 0))) {
           temp = DateTime(temp.year, temp.month, temp.day, 8, 0);
         }
         
-        // Se for depois do horário de encerramento, pula para as 8:00 do dia seguinte
         if (temp.hour >= currentEndHour) {
           temp = DateTime(temp.year, temp.month, temp.day + 1, 8, 0);
           continue; 
         }
 
-        // Calcula até o fim do expediente ou até 'now'
         DateTime endOfWorkDay = DateTime(temp.year, temp.month, temp.day, currentEndHour, 0);
         DateTime limit = now.isBefore(endOfWorkDay) ? now : endOfWorkDay;
         
@@ -534,7 +526,6 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
 
     final criticalStores = provider.progressoPorLoja.where((s) => s.percentual < 0.3 && s.total > 0).toList();
     
-    // Alerta de inatividade apenas durante o horário comercial e se houver mais de 2h de inatividade "útil"
     final inactiveUsers = provider.rankingEquipe.where((u) {
       if (u.ultimaAtividade == null) return false;
       if (!isWorkingHours) return false;
