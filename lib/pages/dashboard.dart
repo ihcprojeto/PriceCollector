@@ -200,21 +200,8 @@ class _DashboardPageState extends State<DashboardPage> {
         'color': const Color(0xFF39D2C0),
         'route': 'produtos_coletados',
       },
-      {
-        'title': 'Produtividade',
-        'subtitle': 'Veja os resultados',
-        'icon': Icons.bar_chart_rounded,
-        'color': const Color(0xFFEE8B60),
-        'route': 'produtividade',
-      },
+
       if (usuario?.funcao == 'administrador') ...[
-        {
-          'title': 'Dispositivos',
-          'subtitle': 'Gerenciar aparelhos',
-          'icon': Icons.devices_sharp,
-          'color': const Color(0xFF57636C),
-          'route': 'dispositivos',
-        },
         {
           'title': 'Produtos',
           'subtitle': 'Catálogo global',
@@ -222,14 +209,28 @@ class _DashboardPageState extends State<DashboardPage> {
           'color': const Color(0xFFEE6081),
           'route': 'gerenciamento_produtos',
         },
+        {
+          'title': 'Produtividade',
+          'subtitle': 'Veja os resultados',
+          'icon': Icons.bar_chart_rounded,
+          'color': const Color(0xFFEE8B60),
+          'route': 'produtividade',
+        },
+        {
+          'title': 'Dispositivos',
+          'subtitle': 'Gerenciar aparelhos',
+          'icon': Icons.devices_sharp,
+          'color': const Color(0xFF57636C),
+          'route': 'dispositivos',
+        },
       ],
-      {
-        'title': 'Operações',
-        'subtitle': 'Configurações e logs',
-        'icon': Icons.settings_suggest_rounded,
-        'color': const Color(0xFF9460EE),
-        'route': 'operacoes',
-      },
+      // {
+      //   'title': 'Operações',
+      //   'subtitle': 'Configurações e logs',
+      //   'icon': Icons.settings_suggest_rounded,
+      //   'color': const Color(0xFF9460EE),
+      //   'route': 'operacoes',
+      // },
     ];
 
     return GridView.builder(
