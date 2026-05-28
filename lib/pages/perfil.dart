@@ -35,6 +35,7 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
   final TextEditingController _searchColetaController = TextEditingController();
   String? _filterLoja;
   String _orderBy = 'Nome (A-Z)';
+  String _statusFilter = 'Todos';
 
   bool _isPasswordVisible1 = false;
   bool _isPasswordVisible2 = false;
@@ -216,6 +217,22 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
                 children: [
                   Expanded(
                     child: _buildDropdown(
+                      value: _statusFilter,
+                      hint: 'Status',
+                      items: ['Todos', 'Ativos', 'Removidos']
+                          .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _statusFilter = val);
+                          coletaProvider.setStatusFilter(val);
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildDropdown(
                       value: _filterLoja,
                       hint: 'Todas as Lojas',
                       items: [
@@ -276,85 +293,159 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
   }
 
   Widget _buildColetaCard(ColetaModel coleta) {
+    final bool isHistorical = coleta.isDemandActive == false;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isHistorical ? Colors.grey[50] : Colors.white,
           boxShadow: const [BoxShadow(blurRadius: 8, color: Color(0x0D000000), offset: Offset(0, 2))],
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+          border: Border.all(
+            color: isHistorical ? Colors.grey[300]! : AppTheme.primary.withOpacity(0.3),
+            width: isHistorical ? 1 : 1.5,
+          ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: 80, height: 80, color: AppTheme.inputBg,
-                  child: (coleta.produtoImagemUrl != null && coleta.produtoImagemUrl!.isNotEmpty)
-                    ? Image.network(
-                        coleta.produtoImagemUrl!,
-                        width: 80, height: 80, fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.inventory_2_outlined, color: AppTheme.primary),
-                      )
-                    : const Icon(Icons.inventory_2_outlined, color: AppTheme.primary),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(coleta.produtoNome, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.interTight(fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 2),
-                    Text(
-                      coleta.marcaProduto,
-                      style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[600], fontWeight: FontWeight.w500),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: 80, height: 80, color: AppTheme.inputBg,
+                      child: ColorFiltered(
+                        colorFilter: isHistorical 
+                          ? const ColorFilter.mode(Colors.grey, BlendMode.saturation)
+                          : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
+                        child: (coleta.produtoImagemUrl != null && coleta.produtoImagemUrl!.isNotEmpty)
+                          ? Image.network(
+                              coleta.produtoImagemUrl!,
+                              width: 80, height: 80, fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.inventory_2_outlined, color: AppTheme.primary),
+                            )
+                          : const Icon(Icons.inventory_2_outlined, color: AppTheme.primary),
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.store_rounded, size: 14, color: AppTheme.primary),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            coleta.lojaNome, 
-                            maxLines: 1, 
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600)
+                        Text(
+                          coleta.produtoNome, 
+                          maxLines: 1, 
+                          overflow: TextOverflow.ellipsis, 
+                          style: GoogleFonts.interTight(
+                            fontSize: 16, 
+                            fontWeight: FontWeight.bold,
+                            color: isHistorical ? Colors.grey[600] : Colors.black,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('R\$ ${coleta.preco.toStringAsFixed(2)}', style: GoogleFonts.interTight(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
+                        const SizedBox(height: 2),
+                        Text(
+                          coleta.marcaProduto,
+                          style: GoogleFonts.inter(
+                            fontSize: 11, 
+                            color: isHistorical ? Colors.grey[400] : Colors.grey[600], 
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
                         Row(
                           children: [
-                            IconButton(
-                              onPressed: () => _handleEditColeta(coleta),
-                              icon: const Icon(Icons.edit_rounded, color: AppTheme.primary, size: 20),
-                              constraints: const BoxConstraints(), padding: EdgeInsets.zero,
+                            Icon(Icons.store_rounded, size: 14, color: isHistorical ? Colors.grey : AppTheme.primary),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                coleta.lojaNome, 
+                                maxLines: 1, 
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  color: isHistorical ? Colors.grey : AppTheme.primary, 
+                                  fontSize: 12, 
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              onPressed: () => _confirmDeleteColeta(coleta),
-                              icon: const Icon(Icons.delete_forever, color: Color(0xFFF64736), size: 22),
-                              constraints: const BoxConstraints(), padding: EdgeInsets.zero,
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'R\$ ${coleta.preco.toStringAsFixed(2)}', 
+                              style: GoogleFonts.interTight(
+                                fontSize: 18, 
+                                fontWeight: FontWeight.bold, 
+                                color: isHistorical ? Colors.grey : Colors.green,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                if (!isHistorical) ...[
+                                  IconButton(
+                                    onPressed: () => _handleEditColeta(coleta),
+                                    icon: const Icon(Icons.edit_rounded, color: AppTheme.primary, size: 20),
+                                    constraints: const BoxConstraints(), padding: EdgeInsets.zero,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    onPressed: () => _confirmDeleteColeta(coleta),
+                                    icon: const Icon(
+                                      Icons.delete_forever,
+                                      color: Color(0xFFF64736),
+                                      size: 22,
+                                    ),
+                                    constraints: const BoxConstraints(), padding: EdgeInsets.zero,
+                                  ),
+                                ] else
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[200],
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Colors.grey[400]!),
+                                    ),
+                                    child: Text(
+                                      '⚠️ REMOVIDO DO CATÁLOGO',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
+                ],
+              ),
+            ),
+            if (isHistorical)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  onPressed: () => _confirmDeleteColeta(coleta),
+                  icon: const Icon(
+                    Icons.delete_forever,
+                    color: Colors.grey,
+                    size: 20,
+                  ),
+                  constraints: const BoxConstraints(), padding: EdgeInsets.zero,
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -633,7 +724,15 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
   }
 
   Future<void> _confirmDeleteColeta(ColetaModel coleta) async {
-    final confirm = await _showConfirmDialog('Excluir Coleta?', 'Deseja remover esta coleta? O produto voltará para pendente.');
+    final bool isHistorical = coleta.isDemandActive == false;
+    
+    final confirm = await _showConfirmDialog(
+      isHistorical ? 'Excluir do Histórico?' : 'Excluir Coleta?', 
+      isHistorical 
+        ? 'Deseja realmente remover esta coleta do seu histórico permanente? Esta ação não pode ser desfeita.'
+        : 'Deseja remover esta coleta? O produto voltará para pendente.'
+    );
+
     if (confirm == true && mounted) {
       await context.read<ColetaProvider>().excluirColeta(coleta);
     }

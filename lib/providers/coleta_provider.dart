@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/coleta_model.dart';
 import '../repositories/coleta_repository.dart';
@@ -17,15 +18,17 @@ class ColetaProvider with ChangeNotifier {
   String? _usuarioIdFiltro;
   String _searchQuery = '';
   String _orderBy = 'Nome (A-Z)';
+  String _statusFilter = 'Todos';
   
   int _totalDemandas = 0;
+  int _totalColetados = 0;
 
   List<ColetaModel> get coletas => _filteredColetas;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   double get progresso {
     if (_totalDemandas == 0) return 0;
-    return _coletas.length / _totalDemandas;
+    return _totalColetados / _totalDemandas;
   }
 
   StreamSubscription<List<ColetaModel>>? _subscription;
@@ -40,15 +43,39 @@ class ColetaProvider with ChangeNotifier {
     _subscription?.cancel();
     _subscription = _coletaRepository.getColetas(lojaId: _lojaIdFiltro, usuarioId: _usuarioIdFiltro).listen((data) async {
       try {
-        _coletas = data;
+        List<ColetaModel> coletasComStatus = data;
         
         try {
           _totalDemandas = await _produtoRepository.getTotalDemandas(lojaId: _lojaIdFiltro);
+          _totalColetados = await _produtoRepository.getColetadosDemandas(lojaId: _lojaIdFiltro);
+
+          // Verificar se cada coleta ainda possui uma demanda ativa correspondente
+          final Set<String> demandasAtivasIds = {};
+          if (_lojaIdFiltro != null) {
+            final snapshot = await FirebaseFirestore.instance
+                .collection('lojas')
+                .doc(_lojaIdFiltro)
+                .collection('demandas')
+                .get();
+            demandasAtivasIds.addAll(snapshot.docs.map((d) => d.id));
+          } else {
+            // Se for global (Minhas Coletas), buscamos por barcode + lojaId pode ser lento
+            // mas como é para o usuário logado, geralmente são poucas coletas
+            final snapshot = await FirebaseFirestore.instance.collectionGroup('demandas').get();
+            demandasAtivasIds.addAll(snapshot.docs.map((d) => '${d.reference.parent.parent?.id}_${d.id}'));
+          }
+
+          coletasComStatus = data.map((c) {
+            final String key = _lojaIdFiltro != null ? c.produtoBarcode : '${c.lojaId}_${c.produtoBarcode}';
+            return c.copyWith(isDemandActive: demandasAtivasIds.contains(key));
+          }).toList();
+
         } catch (e) {
-          debugPrint('Aviso: Falha ao calcular total de demandas (provavelmente falta de índice): $e');
+          debugPrint('Aviso: Falha ao carregar metadados das demandas: $e');
           _totalDemandas = 0;
         }
 
+        _coletas = coletasComStatus;
         _applyFiltersAndSort();
         _isLoading = false;
         notifyListeners();
@@ -86,12 +113,25 @@ class ColetaProvider with ChangeNotifier {
     _applyFiltersAndSort();
   }
 
+  void setStatusFilter(String status) {
+    _statusFilter = status;
+    _applyFiltersAndSort();
+  }
+
   void _applyFiltersAndSort() {
     _filteredColetas = _coletas.where((c) {
       final matchesSearch = c.produtoNome.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           c.marcaProduto.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           c.produtoBarcode.contains(_searchQuery);
-      return matchesSearch;
+      
+      bool matchesStatus = true;
+      if (_statusFilter == 'Ativos') {
+        matchesStatus = c.isDemandActive != false;
+      } else if (_statusFilter == 'Removidos') {
+        matchesStatus = c.isDemandActive == false;
+      }
+
+      return matchesSearch && matchesStatus;
     }).toList();
 
     switch (_orderBy) {

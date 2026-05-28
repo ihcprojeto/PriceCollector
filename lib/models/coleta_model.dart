@@ -15,6 +15,7 @@ class ColetaModel {
   final String usuarioId;
   final String usuarioMatricula;
   final String usuarioNome;
+  final bool? isDemandActive;
 
   ColetaModel({
     this.id,
@@ -31,7 +32,28 @@ class ColetaModel {
     required this.usuarioId,
     required this.usuarioMatricula,
     required this.usuarioNome,
+    this.isDemandActive,
   });
+
+  ColetaModel copyWith({bool? isDemandActive}) {
+    return ColetaModel(
+      id: id,
+      dataColeta: dataColeta,
+      dispositivoId: dispositivoId,
+      dispositivoModelo: dispositivoModelo,
+      lojaId: lojaId,
+      lojaNome: lojaNome,
+      preco: preco,
+      produtoBarcode: produtoBarcode,
+      produtoNome: produtoNome,
+      marcaProduto: marcaProduto,
+      produtoImagemUrl: produtoImagemUrl,
+      usuarioId: usuarioId,
+      usuarioMatricula: usuarioMatricula,
+      usuarioNome: usuarioNome,
+      isDemandActive: isDemandActive ?? this.isDemandActive,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {

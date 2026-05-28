@@ -131,6 +131,29 @@ class ProdutoRepository {
     return null;
   }
 
+  Future<int> getColetadosDemandas({String? lojaId}) async {
+    if (lojaId != null && lojaId.isNotEmpty) {
+      final snapshot = await _firestore
+          .collection('lojas')
+          .doc(lojaId)
+          .collection('demandas')
+          .where('status', isEqualTo: 'coletado')
+          .get();
+      return snapshot.size;
+    } else {
+      try {
+        final snapshot = await _firestore
+            .collectionGroup('demandas')
+            .where('status', isEqualTo: 'coletado')
+            .get();
+        return snapshot.size;
+      } catch (e) {
+        final snapshot = await _firestore.collectionGroup('demandas').get();
+        return snapshot.docs.where((doc) => doc.data()['status'] == 'coletado').length;
+      }
+    }
+  }
+
   Future<int> getTotalDemandas({String? lojaId}) async {
     if (lojaId != null && lojaId.isNotEmpty) {
       final snapshot = await _firestore

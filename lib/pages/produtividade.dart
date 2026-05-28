@@ -217,7 +217,7 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
       mainAxisSpacing: 16,
       childAspectRatio: isMobile ? 1.2 : 1.5,
       children: [
-        _buildSummaryCard('Total Coletado', provider.totalColetados.toString(), Icons.check_circle_rounded, Colors.green),
+        _buildSummaryCard('Coletados', provider.totalColetadosOperacional.toString(), Icons.check_circle_rounded, Colors.green),
         _buildSummaryCard('Pendentes', provider.totalPendentes.toString(), Icons.pending_rounded, Colors.orange),
         _buildSummaryCard('Cancelados', provider.totalCancelados.toString(), Icons.cancel_rounded, Colors.red),
         _buildSummaryCard('Conclusão', '${(provider.percentualConclusao * 100).toStringAsFixed(1)}%', Icons.pie_chart_rounded, AppTheme.primary),

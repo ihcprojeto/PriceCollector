@@ -75,6 +75,7 @@ class ProdutividadeProvider with ChangeNotifier {
   List<UsuarioModel> get usuarios => _usuarios;
 
   int totalColetados = 0;
+  int totalColetadosOperacional = 0;
   int totalPendentes = 0;
   int totalCancelados = 0;
   double percentualConclusao = 0;
@@ -194,8 +195,10 @@ class ProdutividadeProvider with ChangeNotifier {
     totalCancelados = demandasBase.where((d) => d.demanda.status == 'cancelado').length;
     final totalAtivos = demandasBase.length - totalCancelados;
     
-    totalPendentes = totalAtivos - coletasTime.length;
-    percentualConclusao = totalAtivos > 0 ? (coletasTime.length / totalAtivos).clamp(0, 1) : 0;
+    // O progresso operacional deve ser baseado no status das demandas atuais
+    totalColetadosOperacional = demandasBase.where((d) => d.demanda.status == 'coletado').length;
+    totalPendentes = totalAtivos - totalColetadosOperacional;
+    percentualConclusao = totalAtivos > 0 ? (totalColetadosOperacional / totalAtivos).clamp(0, 1) : 0;
 
     if (coletasUsuario.isNotEmpty) {
       final coletasPorUsuario = groupBy(coletasUsuario, (ColetaModel c) => c.usuarioId);
@@ -291,8 +294,9 @@ class ProdutividadeProvider with ChangeNotifier {
     }).toList()..sort((a, b) => b.itensColetados.compareTo(a.itensColetados));
 
     progressoPorLoja = _lojas.map((loja) {
-      final coletadosLoja = coletasTime.where((c) => c.lojaId == loja.id).length;
-      final totalLoja = demandasComLoja.where((d) => d.lojaId == loja.id && d.demanda.status != 'cancelado').length;
+      final demandasDaLoja = demandasComLoja.where((d) => d.lojaId == loja.id).toList();
+      final coletadosLoja = demandasDaLoja.where((d) => d.demanda.status == 'coletado').length;
+      final totalLoja = demandasDaLoja.where((d) => d.demanda.status != 'cancelado').length;
       
       return StoreProgress(
         id: loja.id!,
