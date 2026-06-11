@@ -46,17 +46,25 @@ class _LojaPageState extends State<LojaPage> {
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Deseja deletar loja?'),
-        content: Text('Tem certeza que deseja remover a loja "${loja.nome}"?'),
+        title: const Text('Confirmar Exclusão de Loja'),
+        content: Text(
+          'Deseja excluir permanentemente a loja "${loja.nome}"? \n\n'
+          'Esta ação removerá todas as coletas, demandas e históricos vinculados a esta loja. '
+          'Os indicadores e métricas do sistema serão recalculados automaticamente.',
+          style: GoogleFonts.inter(fontSize: 14),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancelar'),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Confirmar'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Excluir Tudo'),
           ),
         ],
       ),
