@@ -30,11 +30,15 @@ class _GerenciamentoProdutosPageState extends State<GerenciamentoProdutosPage> {
     _searchController.text = widget.initialSearch ?? '';
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<GerenciamentoProdutoProvider>();
-      provider.fetchProdutos();
+      
       if (widget.initialSearch != null) {
         provider.setSearchQuery(widget.initialSearch!);
         _searchFocusNode.requestFocus();
+      } else {
+        provider.clearFilters();
       }
+      
+      provider.fetchProdutos();
       context.read<LojaProvider>().fetchLojas();
     });
   }
@@ -43,6 +47,10 @@ class _GerenciamentoProdutosPageState extends State<GerenciamentoProdutosPage> {
   void dispose() {
     _searchController.dispose();
     _searchFocusNode.dispose();
+    // Limpa os filtros ao sair da tela
+    if (mounted) {
+      context.read<GerenciamentoProdutoProvider>().clearFilters();
+    }
     super.dispose();
   }
 

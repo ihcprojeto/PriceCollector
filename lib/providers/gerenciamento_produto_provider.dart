@@ -128,6 +128,12 @@ class GerenciamentoProdutoProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void clearFilters() {
+    _searchQuery = '';
+    _selectedBarcodes.clear();
+    _applyFilters();
+  }
+
   Future<bool> excluirSelecionados() async {
     _isLoading = true;
     notifyListeners();
