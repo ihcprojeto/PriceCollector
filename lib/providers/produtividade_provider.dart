@@ -75,6 +75,7 @@ class ProdutividadeProvider with ChangeNotifier {
   List<UsuarioModel> get usuarios => _usuarios;
 
   int totalColetados = 0;
+  int totalColetadosPeriodo = 0;
   int totalColetadosOperacional = 0;
   int totalPendentes = 0;
   int totalCancelados = 0;
@@ -181,9 +182,21 @@ class ProdutividadeProvider with ChangeNotifier {
   }
 
   void _calcularMetricas(List<ColetaModel> coletasTime, List<DemandaWithStore> demandasComLoja) {
+    // Filtrar apenas coletas cujos produtos ainda existem no catálogo (demandas não canceladas)
+    final barcodesAtivos = demandasComLoja
+        .where((d) => d.demanda.status != 'cancelado')
+        .map((d) => '${d.lojaId}_${d.demanda.barcode}')
+        .toSet();
+
+    final coletasValidas = coletasTime.where((c) => 
+      barcodesAtivos.contains('${c.lojaId}_${c.produtoBarcode}')
+    ).toList();
+
+    totalColetadosPeriodo = coletasValidas.length;
+
     final coletasUsuario = _usuarioIdFiltro != null 
-        ? coletasTime.where((c) => c.usuarioId == _usuarioIdFiltro).toList()
-        : coletasTime;
+        ? coletasValidas.where((c) => c.usuarioId == _usuarioIdFiltro).toList()
+        : coletasValidas;
 
     totalColetados = coletasUsuario.length;
     
@@ -248,7 +261,7 @@ class ProdutividadeProvider with ChangeNotifier {
       );
     }).where((s) => s.coletados > 0).toList();
 
-    final porUsuarioRanking = groupBy(coletasTime, (ColetaModel c) => c.usuarioId);
+    final porUsuarioRanking = groupBy(coletasValidas, (ColetaModel c) => c.usuarioId);
     
     rankingEquipe = _usuarios.map((u) {
       final userColetas = porUsuarioRanking[u.id] ?? [];

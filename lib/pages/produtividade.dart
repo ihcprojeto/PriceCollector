@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -66,6 +67,7 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildFilters(context, provider, lojaProvider),
+                      _buildContributionIndicator(provider),
                       const SizedBox(height: 24),
                       _buildSummaryGrid(context, provider),
                       const SizedBox(height: 32),
@@ -89,6 +91,53 @@ class _ProdutividadePageState extends State<ProdutividadePage> {
         backgroundColor: AppTheme.primary,
         icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.white),
         label: const Text('Exportar PDF', style: TextStyle(color: Colors.white)),
+      ),
+    );
+  }
+
+  Widget _buildContributionIndicator(ProdutividadeProvider provider) {
+    if (provider.usuarioIdFiltro == null || provider.totalColetadosPeriodo == 0) {
+      return const SizedBox.shrink();
+    }
+
+    final usuario = provider.usuarios.firstWhereOrNull((u) => u.id == provider.usuarioIdFiltro);
+    if (usuario == null) return const SizedBox.shrink();
+
+    final x = provider.totalColetados;
+    final y = provider.totalColetadosPeriodo;
+    final z = y > 0 ? (x / y) * 100 : 0.0;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Center(
+        child: RichText(
+          textAlign: TextAlign.center,
+          text: TextSpan(
+            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[700]),
+            children: [
+              TextSpan(
+                text: usuario.nome,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const TextSpan(text: ' contribuiu com '),
+              TextSpan(
+                text: '$x',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary),
+              ),
+              const TextSpan(text: ' das '),
+              TextSpan(
+                text: '$y',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const TextSpan(text: ' coletas ('),
+              TextSpan(
+                text: '${z.toStringAsFixed(1)}%',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+              ),
+              const TextSpan(text: ')'),
+            ],
+          ),
+        ),
       ),
     );
   }

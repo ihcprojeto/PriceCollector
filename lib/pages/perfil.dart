@@ -639,6 +639,31 @@ class _PerfilPageState extends State<PerfilPage> with TickerProviderStateMixin {
                 'Enviamos um link de confirmação para ${_emailController.text.trim()}. Por favor, acesse sua caixa de entrada e confirme a alteração.',
                 style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF666666)),
               ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber.shade700, width: 0.5),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, size: 16, color: Colors.amber.shade900),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Importante: Caso não encontre o e-mail, verifique sua caixa de Spam ou Lixo Eletrônico.',
+                        style: GoogleFonts.inter(
+                          fontSize: 12, 
+                          color: Colors.amber.shade900, 
+                          fontWeight: FontWeight.w500
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 16),
             ],
             Text(
