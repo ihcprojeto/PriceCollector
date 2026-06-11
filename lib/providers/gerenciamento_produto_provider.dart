@@ -41,8 +41,14 @@ class GerenciamentoProdutoProvider with ChangeNotifier {
       Map<String, int> contagemPresenca = {};
       
       try {
+        final activeLojas = await FirebaseFirestore.instance.collection('lojas').where('ativo', isEqualTo: true).get();
+        final activeIds = activeLojas.docs.map((d) => d.id).toSet();
+
         final snapshotDemandas = await FirebaseFirestore.instance.collectionGroup('demandas').get();
         for (var doc in snapshotDemandas.docs) {
+          final storeId = doc.reference.parent.parent?.id;
+          if (!activeIds.contains(storeId)) continue;
+
           final barcode = doc.data()['barcode'] as String?;
           if (barcode != null) {
             contagemPresenca[barcode] = (contagemPresenca[barcode] ?? 0) + 1;
@@ -50,7 +56,7 @@ class GerenciamentoProdutoProvider with ChangeNotifier {
         }
       } catch (e) {
         debugPrint('Erro ao buscar demandas via collectionGroup: $e');
-        final lojas = await FirebaseFirestore.instance.collection('lojas').get();
+        final lojas = await FirebaseFirestore.instance.collection('lojas').where('ativo', isEqualTo: true).get();
         for (var lojaDoc in lojas.docs) {
           final demandas = await lojaDoc.reference.collection('demandas').get();
           for (var d in demandas.docs) {

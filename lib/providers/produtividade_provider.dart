@@ -149,11 +149,14 @@ class ProdutividadeProvider with ChangeNotifier {
               DemandaWithStore(DemandaModel.fromFirestore(d.data(), d.id), _lojaIdFiltro)).toList();
         } else {
           try {
+            final activeIds = _lojas.map((l) => l.id).toSet();
             final snapshotDemandas = await FirebaseFirestore.instance.collectionGroup('demandas').get();
-            todasDemandasComLoja = snapshotDemandas.docs.map((d) {
-              final lojaId = d.reference.parent.parent?.id;
-              return DemandaWithStore(DemandaModel.fromFirestore(d.data(), d.id), lojaId);
-            }).toList();
+            todasDemandasComLoja = snapshotDemandas.docs
+                .where((d) => activeIds.contains(d.reference.parent.parent?.id))
+                .map((d) {
+                  final lojaId = d.reference.parent.parent?.id;
+                  return DemandaWithStore(DemandaModel.fromFirestore(d.data(), d.id), lojaId);
+                }).toList();
           } catch (e) {
             debugPrint('Falha no collectionGroup: $e');
             for (var loja in _lojas) {
@@ -182,8 +185,13 @@ class ProdutividadeProvider with ChangeNotifier {
   }
 
   void _calcularMetricas(List<ColetaModel> coletasTime, List<DemandaWithStore> demandasComLoja) {
+    final activeStoreIds = _lojas.map((l) => l.id).toSet();
+    
+    // Filtrar demandas para considerar apenas lojas ativas e não deletadas
+    var demandasBase = demandasComLoja.where((d) => activeStoreIds.contains(d.lojaId)).toList();
+
     // Filtrar apenas coletas cujos produtos ainda existem no catálogo (demandas não canceladas)
-    final barcodesAtivos = demandasComLoja
+    final barcodesAtivos = demandasBase
         .where((d) => d.demanda.status != 'cancelado')
         .map((d) => '${d.lojaId}_${d.demanda.barcode}')
         .toSet();
@@ -200,7 +208,6 @@ class ProdutividadeProvider with ChangeNotifier {
 
     totalColetados = coletasUsuario.length;
     
-    var demandasBase = demandasComLoja;
     if (_lojaIdFiltro != null) {
       demandasBase = demandasBase.where((d) => d.lojaId == _lojaIdFiltro).toList();
     }

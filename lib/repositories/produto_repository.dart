@@ -131,6 +131,11 @@ class ProdutoRepository {
     return null;
   }
 
+  Future<Set<String>> _getActiveLojaIds() async {
+    final snapshot = await _firestore.collection('lojas').where('ativo', isEqualTo: true).get();
+    return snapshot.docs.map((d) => d.id).toSet();
+  }
+
   Future<int> getColetadosDemandas({String? lojaId}) async {
     if (lojaId != null && lojaId.isNotEmpty) {
       final snapshot = await _firestore
@@ -141,15 +146,20 @@ class ProdutoRepository {
           .get();
       return snapshot.size;
     } else {
+      final activeIds = await _getActiveLojaIds();
       try {
         final snapshot = await _firestore
             .collectionGroup('demandas')
             .where('status', isEqualTo: 'coletado')
             .get();
-        return snapshot.size;
+        return snapshot.docs.where((doc) => activeIds.contains(doc.reference.parent.parent?.id)).length;
       } catch (e) {
         final snapshot = await _firestore.collectionGroup('demandas').get();
-        return snapshot.docs.where((doc) => doc.data()['status'] == 'coletado').length;
+        return snapshot.docs.where((doc) {
+          final storeId = doc.reference.parent.parent?.id;
+          final status = doc.data()['status'];
+          return activeIds.contains(storeId) && status == 'coletado';
+        }).length;
       }
     }
   }
@@ -164,15 +174,20 @@ class ProdutoRepository {
           .get();
       return snapshot.size;
     } else {
+      final activeIds = await _getActiveLojaIds();
       try {
         final snapshot = await _firestore
             .collectionGroup('demandas')
             .where('status', isNotEqualTo: 'cancelado')
             .get();
-        return snapshot.size;
+        return snapshot.docs.where((doc) => activeIds.contains(doc.reference.parent.parent?.id)).length;
       } catch (e) {
         final snapshot = await _firestore.collectionGroup('demandas').get();
-        return snapshot.docs.where((doc) => doc.data()['status'] != 'cancelado').length;
+        return snapshot.docs.where((doc) {
+          final storeId = doc.reference.parent.parent?.id;
+          final status = doc.data()['status'];
+          return activeIds.contains(storeId) && status != 'cancelado';
+        }).length;
       }
     }
   }

@@ -59,10 +59,14 @@ class ColetaProvider with ChangeNotifier {
                 .get();
             demandasAtivasIds.addAll(snapshot.docs.map((d) => d.id));
           } else {
-            // Se for global (Minhas Coletas), buscamos por barcode + lojaId pode ser lento
-            // mas como é para o usuário logado, geralmente são poucas coletas
+            // Se for global, filtrar apenas por lojas ativas para evitar considerar demandas de lojas deletadas/inativas
+            final activeLojas = await FirebaseFirestore.instance.collection('lojas').where('ativo', isEqualTo: true).get();
+            final activeIds = activeLojas.docs.map((d) => d.id).toSet();
+            
             final snapshot = await FirebaseFirestore.instance.collectionGroup('demandas').get();
-            demandasAtivasIds.addAll(snapshot.docs.map((d) => '${d.reference.parent.parent?.id}_${d.id}'));
+            demandasAtivasIds.addAll(snapshot.docs
+                .where((d) => activeIds.contains(d.reference.parent.parent?.id))
+                .map((d) => '${d.reference.parent.parent?.id}_${d.id}'));
           }
 
           coletasComStatus = data.map((c) {
