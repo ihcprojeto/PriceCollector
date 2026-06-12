@@ -206,7 +206,7 @@ class _ProdutosColetadosPageState extends State<ProdutosColetadosPage> {
                   value: _statusFilter,
                   hint: 'Status',
                   items: ['Todos', 'Ativos', 'Removidos']
-                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                      .map((s) => DropdownMenuItem(value: s, child: Text(s, style: const TextStyle(fontSize: 12))))
                       .toList(),
                   onChanged: (val) {
                     if (val != null) {
@@ -222,8 +222,8 @@ class _ProdutosColetadosPageState extends State<ProdutosColetadosPage> {
                   value: _lojaIdFiltro,
                   hint: 'Todas as Lojas',
                   items: [
-                    const DropdownMenuItem(value: null, child: Text('Todas as Lojas')),
-                    ...lojaProvider.lojas.map((l) => DropdownMenuItem(value: l.id, child: Text(l.nome))),
+                    const DropdownMenuItem(value: null, child: Text('Todas as Lojas', style: TextStyle(fontSize: 12))),
+                    ...lojaProvider.lojas.map((l) => DropdownMenuItem(value: l.id, child: Text(l.nome, style: const TextStyle(fontSize: 12)))),
                   ],
                   onChanged: (val) {
                     setState(() => _lojaIdFiltro = val);
@@ -244,7 +244,7 @@ class _ProdutosColetadosPageState extends State<ProdutosColetadosPage> {
                     'Menor preço',
                     'Maior preço'
                   ]
-                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                      .map((s) => DropdownMenuItem(value: s, child: Text(s, style: const TextStyle(fontSize: 12))))
                       .toList(),
                   onChanged: (val) {
                     if (val != null) {
@@ -512,9 +512,10 @@ class _ProdutosColetadosPageState extends State<ProdutosColetadosPage> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
-          hint: Text(hint, style: const TextStyle(fontSize: 14)),
+          hint: Text(hint, style: const TextStyle(fontSize: 12)),
           icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
           isExpanded: true,
+          style: const TextStyle(fontSize: 12, color: Colors.black),
           items: items,
           onChanged: onChanged,
         ),
